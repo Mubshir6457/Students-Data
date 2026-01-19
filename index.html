@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدرسہ مینجمنٹ سسٹم</title>
+<style>
+body{font-family:Arial;direction:rtl;margin:0;padding:20px;background:#f0f2f5}
+.container{max-width:1000px;margin:auto;background:white;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.1);overflow:hidden}
+.header{background:linear-gradient(135deg,#1a5f7a,#1597bb);color:white;padding:20px;text-align:center}
+.header h1{margin:0;font-size:24px}
+.header p{margin:5px 0 0;opacity:0.9}
+.content{padding:20px}
+.box{background:#f8f9fa;border-radius:10px;padding:20px;margin-bottom:20px;border:1px solid #e0e0e0}
+.box-title{color:#1a5f7a;font-size:18px;margin:0 0 15px 0;padding-bottom:8px;border-bottom:2px solid #17a2b8}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px}
+.form-group{margin-bottom:12px}
+label{display:block;margin-bottom:6px;color:#495057;font-weight:500;font-size:13px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #dee2e6;border-radius:6px;font-size:13px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#17a2b8}
+.btn{padding:10px 20px;border:none;border-radius:6px;font-size:14px;cursor:pointer;transition:0.3s;margin:5px}
+.btn-search{background:#28a745;color:white}
+.btn-search:hover{background:#218838}
+.btn-submit{background:#007bff;color:white}
+.btn-submit:hover{background:#0056b3}
+.btn-delete{background:#dc3545;color:white}
+.btn-delete:hover{background:#c82333}
+.btn-logout{background:#6c757d;color:white}
+.btn-logout:hover{background:#545b62}
+.btn-excel{background:#20c997;color:white}
+.btn-excel:hover{background:#17a589}
+.search-results{background:white;border-radius:8px;padding:15px;margin-top:15px;border:1px solid #dee2e6}
+.student-card{background:#f8f9fa;border-radius:8px;padding:15px;margin-bottom:10px;border-left:4px solid #17a2b8}
+.kharaj-card{border-left-color:#dc3545;background:#fff3cd}
+.student-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
+.info-item{background:white;padding:8px;border-radius:5px;border:1px solid #eee}
+.info-label{font-size:11px;color:#6c757d;margin-bottom:2px}
+.info-value{font-weight:500;color:#212529;font-size:13px}
+.login-box{max-width:350px;margin:40px auto;padding:25px;background:white;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
+.hidden{display:none}
+.status-badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;display:inline-block}
+.active-badge{background:#d4edda;color:#155724}
+.kharaj-badge{background:#f8d7da;color:#721c24}
+.stats-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
+.stat-box{padding:15px;border-radius:8px;color:white;text-align:center}
+.stat-box.total{background:#1a5f7a}
+.stat-box.active{background:#28a745}
+.stat-box.outside{background:#dc3545}
+.stat-box.tution{background:#ffc107;color:#212529}
+.stat-box.separa{background:#17a2b8}
+.stat-number{font-size:28px;font-weight:bold;margin:5px 0}
+.stat-label{font-size:14px}
+.clear-search{background:#6c757d;color:white;border:none;padding:8px 15px;border-radius:4px;font-size:12px;cursor:pointer;margin-left:10px}
+.category-badge{padding:2px 8px;border-radius:10px;font-size:10px;margin-left:5px}
+.category-tution{background:#ffc107;color:#212529}
+.category-separa{background:#17a2b8;color:white}
+</style>
+<!-- SheetJS for Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+<div class="header">
+<h1>📚 مدرسہ مینجمنٹ سسٹم</h1>
+<p>طالب علموں کی اندراج اور انتظام</p>
+</div>
+
+<div class="content">
+<!-- سرچ سیکشن -->
+<div class="box">
+<div class="box-title">🔍 طالب علم تلاش کریں</div>
+<div class="form-grid">
+<div class="form-group">
+<label>رول نمبر درج کریں</label>
+<input type="text" id="searchRoll" placeholder="رول نمبر درج کریں">
+</div>
+<div class="form-group">
+<label>یا نام درج کریں</label>
+<input type="text" id="searchName" placeholder="طالب علم کا نام">
+</div>
+</div>
+<button class="btn btn-search" onclick="searchStudent()">تلاش کریں</button>
+<button class="clear-search" onclick="clearSearch()">تلاش صاف کریں</button>
+<div id="searchResults" class="search-results hidden">
+<h3 style="margin-top:0;color:#1a5f7a">تلاش کے نتائج:</h3>
+<div id="searchResultsContent"></div>
+</div>
+</div>
+
+<!-- لاگ ان سیکشن -->
+<div class="login-box" id="loginBox">
+<h2 style="text-align:center;color:#1a5f7a;margin-bottom:20px">🔐 ایڈمن لاگ ان</h2>
+<div class="form-group">
+<label>ای میل</label>
+<input type="email" id="email" placeholder="admin@example.com" value="admin@example.com">
+</div>
+<div class="form-group">
+<label>پاس ورڈ</label>
+<input type="password" id="password" placeholder="پاس ورڈ" value="admin123">
+</div>
+<button class="btn btn-submit" style="width:100%;margin-top:15px" onclick="login()">لاگ ان کریں</button>
+</div>
+
+<!-- ایڈمن پینل -->
+<div id="adminPanel" class="hidden">
+<!-- احصائيات -->
+<div class="stats-container" id="statsContainer"></div>
+
+<!-- ایکسل ڈاؤنلوڈ -->
+<div class="box">
+<div class="box-title">📊 ڈیٹا مینجمنٹ</div>
+<button class="btn btn-excel" onclick="exportToExcel()">📥 ایکسل فائل ڈاؤنلوڈ کریں</button>
+<p style="color:#666;font-size:12px;margin-top:10px">ایک فائل میں 5 شیٹس ہوں گی: تمام طلباء، فعال طلباء، خارج شدہ طلباء، تیوشن کلاس، سپارہ کلاس</p>
+</div>
+
+<!-- طلباء کی لسٹ باکسز -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px;margin-bottom:20px">
+<div class="box">
+<div class="box-title">👨‍🎓 فعال طلباء</div>
+<div id="activeStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
+</div>
+<div class="box">
+<div class="box-title">🚪 خارج شدہ طلباء</div>
+<div id="outsideStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px;margin-bottom:20px">
+<div class="box">
+<div class="box-title">📖 تیوشن کلاس</div>
+<div id="tutionStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
+</div>
+<div class="box">
+<div class="box-title">📚 سپارہ کلاس</div>
+<div id="separaStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
+</div>
+</div>
+
+<!-- اندراج فارم -->
+<div class="box">
+<div class="box-title">➕ نئی طالب علم اندراج</div>
+<div class="form-grid">
+<div class="form-group">
+<label>رول نمبر *</label>
+<input type="text" id="rollNo" required>
+</div>
+<div class="form-group">
+<label>طالب علم کا نام *</label>
+<input type="text" id="name" required>
+</div>
+<div class="form-group">
+<label>والد کا نام</label>
+<input type="text" id="fatherName">
+</div>
+<div class="form-group">
+<label>عمر</label>
+<input type="number" id="age">
+</div>
+</div>
+<div class="form-grid">
+<div class="form-group">
+<label>کلاس (ایڈمن لکھے) *</label>
+<input type="text" id="class" placeholder="مثال: نورانی قاعدہ، حفظ قرآن" required>
+</div>
+<div class="form-group">
+<label>کلاس کی قسم *</label>
+<select id="classType" required>
+<option value="">منتخب کریں</option>
+<option value="تیوشن">تیوشن</option>
+<option value="سپارہ">سپارہ</option>
+</select>
+</div>
+<div class="form-group">
+<label>سلسلہ نمبر</label>
+<input type="text" id="serialNo">
+</div>
+</div>
+<div class="form-grid">
+<div class="form-group">
+<label>تاریخ اندراج *</label>
+<input type="date" id="admissionDate" required>
+</div>
+</div>
+<button class="btn btn-submit" onclick="addStudent()">✅ اندراج محفوظ کریں</button>
+</div>
+
+<!-- خارج کرنے کا فارم -->
+<div class="box">
+<div class="box-title">🚪 طالب علم خارج کریں</div>
+<div class="form-grid">
+<div class="form-group">
+<label>رول نمبر *</label>
+<input type="text" id="kharajRoll" required>
+</div>
+<div class="form-group">
+<label>خارج ہونے کی تاریخ *</label>
+<input type="date" id="kharajDate" required>
+</div>
+</div>
+<div class="form-grid">
+<div class="form-group">
+<label>خارج ہونے کی وجہ *</label>
+<select id="kharajReason" required>
+<option value="">منتخب کریں</option>
+<option value="کورس مکمل">کورس مکمل</option>
+<option value="خاندانی وجوہات">خاندانی وجوہات</option>
+<option value="مدرسہ تبدیل">مدرسہ تبدیل</option>
+<option value="علالت">علالت</option>
+<option value="ہجرت">ہجرت</option>
+<option value="دیگر">دیگر</option>
+</select>
+</div>
+<div class="form-group">
+<label>مدت قیام (مہینوں میں)</label>
+<input type="number" id="duration" placeholder="مدرسہ میں رہنے کی مدت">
+</div>
+</div>
+<button class="btn btn-delete" onclick="markKharaj()">🚪 خارج کریں</button>
+</div>
+
+<!-- خارج شدہ طلباء ڈیلیٹ -->
+<div class="box">
+<div class="box-title">🗑️ خارج شدہ طالب علم ڈیلیٹ کریں</div>
+<div class="form-grid">
+<div class="form-group">
+<label>رول نمبر درج کریں</label>
+<input type="text" id="deleteRoll" placeholder="خارج شدہ طالب علم کا رول نمبر">
+</div>
+</div>
+<button class="btn btn-delete" onclick="deleteKharajStudent()">مکمل ڈیٹا ڈیلیٹ کریں</button>
+<p style="color:#666;font-size:12px;margin-top:10px">نوٹ: صرف خارج شدہ طلباء کا ڈیٹا ڈیلیٹ ہوسکتا ہے</p>
+</div>
+
+<!-- لاگ آؤٹ -->
+<div style="text-align:center;margin-top:20px;padding-top:15px;border-top:1px solid #eee">
+<button class="btn btn-logout" onclick="logout()">🚪 لاگ آؤٹ کریں</button>
+</div>
+</div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getDatabase, ref, set, get, update, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAlXd1v5IZwaEROAdfKMXMUPflIorWV4Zg",
+  authDomain: "students-51da1.firebaseapp.com",
+  databaseURL: "https://students-51da1-default-rtdb.firebaseio.com",
+  projectId: "students-51da1",
+  storageBucket: "students-51da1.firebasestorage.app",
+  messagingSenderId: "785878911811",
+  appId: "1:785878911811:web:5a0a480d3ceca57976bdf6"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+// Authentication Functions
+window.login = async () => {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  if (!email || !password) {
+    alert('براہ کرم ای میل اور پاس ورڈ درج کریں');
+    return;
+  }
+  
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert('✅ لاگ ان کامیاب!');
+  } catch (error) {
+    alert('❌ لاگ ان ناکام: ' + error.message);
+  }
+};
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('adminPanel').classList.remove('hidden');
+    loadAllStudents();
+    updateStats();
+  } else {
+    document.getElementById('loginBox').classList.remove('hidden');
+    document.getElementById('adminPanel').classList.add('hidden');
+  }
+});
+
+window.logout = async () => {
+  try {
+    await signOut(auth);
+    alert('✅ لاگ آؤٹ کامیاب!');
+  } catch (error) {
+    alert('❌ لاگ آؤٹ میں خرابی');
+  }
+};
+
+// احصائيات اپڈیٹ کریں
+async function updateStats() {
+  try {
+    const snapshot = await get(ref(db, 'students'));
+    
+    if (!snapshot.exists()) {
+      document.getElementById('statsContainer').innerHTML = `
+        <div class="stat-box total">
+          <div class="stat-number">0</div>
+          <div class="stat-label">کل طلباء</div>
+        </div>
+        <div class="stat-box active">
+          <div class="stat-number">0</div>
+          <div class="stat-label">فعال طلباء</div>
+        </div>
+        <div class="stat-box outside">
+          <div class="stat-number">0</div>
+          <div class="stat-label">خارج شدہ</div>
+        </div>
+        <div class="stat-box tution">
+          <div class="stat-number">0</div>
+          <div class="stat-label">تیوشن کلاس</div>
+        </div>
+        <div class="stat-box separa">
+          <div class="stat-number">0</div>
+          <div class="stat-label">سپارہ کلاس</div>
+        </div>
+      `;
+      return;
+    }
+    
+    const students = snapshot.val();
+    let total = 0;
+    let active = 0;
+    let outside = 0;
+    let tution = 0;
+    let separa = 0;
+    
+    for (const student of Object.values(students)) {
+      total++;
+      if (student.status === 'active') {
+        active++;
+      } else {
+        outside++;
+      }
+      if (student.classType === 'تیوشن') {
+        tution++;
+      } else if (student.classType === 'سپارہ') {
+        separa++;
+      }
+    }
+    
+    document.getElementById('statsContainer').innerHTML = `
+      <div class="stat-box total">
+        <div class="stat-number">${total}</div>
+        <div class="stat-label">کل طلباء</div>
+      </div>
+      <div class="stat-box active">
+        <div class="stat-number">${active}</div>
+        <div class="stat-label">فعال طلباء</div>
+      </div>
+      <div class="stat-box outside">
+        <div class="stat-number">${outside}</div>
+        <div class="stat-label">خارج شدہ</div>
+      </div>
+      <div class="stat-box tution">
+        <div class="stat-number">${tution}</div>
+        <div class="stat-label">تیوشن کلاس</div>
+      </div>
+      <div class="stat-box separa">
+        <div class="stat-number">${separa}</div>
+        <div class="stat-label">سپارہ کلاس</div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('Error updating stats:', error);
+  }
+}
+
+// طالب علم تلاش کریں (رول یا نام سے)
+window.searchStudent = async () => {
+  const roll = document.getElementById('searchRoll').value.trim();
+  const name = document.getElementById('searchName').value.trim();
+  
+  if (!roll && !name) {
+    alert('براہ کرم رول نمبر یا نام درج کریں');
+    return;
+  }
+  
+  try {
+    const studentsRef = ref(db, 'students');
+    const snapshot = await get(studentsRef);
+    const resultsDiv = document.getElementById('searchResults');
+    const resultsContent = document.getElementById('searchResultsContent');
+    
+    resultsContent.innerHTML = '';
+    resultsDiv.classList.add('hidden');
+    
+    if (!snapshot.exists()) {
+      resultsContent.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی طالب علم موجود نہیں</div>';
+      resultsDiv.classList.remove('hidden');
+      return;
+    }
+    
+    const students = snapshot.val();
+    let found = false;
+    
+    for (const [rollNo, student] of Object.entries(students)) {
+      const matchRoll = roll && rollNo.includes(roll);
+      const matchName = name && student.name && student.name.toLowerCase().includes(name.toLowerCase());
+      
+      if (matchRoll || matchName) {
+        displayStudentCard(resultsContent, rollNo, student);
+        found = true;
+      }
+    }
+    
+    if (!found) {
+      resultsContent.innerHTML = '<div style="text-align:center;padding:15px;color:#666">طالب علم نہیں ملا</div>';
+    }
+    
+    resultsDiv.classList.remove('hidden');
+  } catch (error) {
+    alert('تلاش میں خرابی: ' + error.message);
+  }
+};
+
+// تلاش صاف کریں
+window.clearSearch = () => {
+  document.getElementById('searchRoll').value = '';
+  document.getElementById('searchName').value = '';
+  document.getElementById('searchResults').classList.add('hidden');
+  document.getElementById('searchResultsContent').innerHTML = '';
+};
+
+// طالب علم کارڈ دکھائیں
+function displayStudentCard(container, rollNo, student) {
+  const card = document.createElement('div');
+  card.className = `student-card ${student.status === 'kharaj' ? 'kharaj-card' : ''}`;
+  
+  const categoryBadge = student.classType === 'تیوشن' 
+    ? `<span class="category-badge category-tution">تیوشن</span>`
+    : `<span class="category-badge category-separa">سپارہ</span>`;
+  
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;color:#1a5f7a;font-size:16px">
+        ${student.name} (رول: ${rollNo}) ${categoryBadge}
+      </h3>
+      <span class="status-badge ${student.status === 'active' ? 'active-badge' : 'kharaj-badge'}">
+        ${student.status === 'active' ? 'فعال' : 'خارج'}
+      </span>
+    </div>
+    <div class="student-info">
+      <div class="info-item">
+        <div class="info-label">والد کا نام</div>
+        <div class="info-value">${student.fatherName || '--'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">عمر</div>
+        <div class="info-value">${student.age || '--'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">کلاس</div>
+        <div class="info-value">${student.class || '--'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">کلاس کی قسم</div>
+        <div class="info-value">${student.classType || '--'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">سلسلہ نمبر</div>
+        <div class="info-value">${student.serialNo || '--'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">تاریخ اندراج</div>
+        <div class="info-value">${student.admissionDate || '--'}</div>
+      </div>
+      ${student.status === 'kharaj' ? `
+        <div class="info-item">
+          <div class="info-label">تاریخ خارج</div>
+          <div class="info-value">${student.kharajDate || '--'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">وجہ خارج</div>
+          <div class="info-value">${student.kharajReason || '--'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">مدت قیام</div>
+          <div class="info-value">${student.duration || '--'} ماہ</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  
+  container.appendChild(card);
+}
+
+// طلباء کی لسٹ لوڈ کریں
+async function loadAllStudents() {
+  try {
+    const snapshot = await get(ref(db, 'students'));
+    const activeList = document.getElementById('activeStudentsList');
+    const outsideList = document.getElementById('outsideStudentsList');
+    const tutionList = document.getElementById('tutionStudentsList');
+    const separaList = document.getElementById('separaStudentsList');
+    
+    if (!snapshot.exists()) {
+      activeList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی فعال طالب علم نہیں</div>';
+      outsideList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی خارج شدہ طالب علم نہیں</div>';
+      tutionList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی تیوشن کلاس طالب علم نہیں</div>';
+      separaList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی سپارہ کلاس طالب علم نہیں</div>';
+      return;
+    }
+    
+    const students = snapshot.val();
+    let activeHtml = '';
+    let outsideHtml = '';
+    let tutionHtml = '';
+    let separaHtml = '';
+    
+    for (const [rollNo, student] of Object.entries(students)) {
+      const categoryBadge = student.classType === 'تیوشن' 
+        ? `<span class="category-badge category-tution" style="font-size:9px">تیوشن</span>`
+        : `<span class="category-badge category-separa" style="font-size:9px">سپارہ</span>`;
+      
+      const row = `
+        <div style="padding:8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <strong>${rollNo}</strong> - ${student.name}
+            <span style="font-size:10px;color:#666">(${student.class || '--'})</span>
+          </div>
+          <div>${categoryBadge}</div>
+        </div>
+      `;
+      
+      if (student.status === 'active') {
+        activeHtml += row;
+      } else {
+        outsideHtml += row;
+      }
+      
+      if (student.classType === 'تیوشن') {
+        tutionHtml += row;
+      } else if (student.classType === 'سپارہ') {
+        separaHtml += row;
+      }
+    }
+    
+    activeList.innerHTML = activeHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی فعال طالب علم نہیں</div>';
+    outsideList.innerHTML = outsideHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی خارج شدہ طالب علم نہیں</div>';
+    tutionList.innerHTML = tutionHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی تیوشن کلاس طالب علم نہیں</div>';
+    separaList.innerHTML = separaHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی سپارہ کلاس طالب علم نہیں</div>';
+    
+    updateStats();
+  } catch (error) {
+    console.error('Error loading students:', error);
+  }
+}
+
+// طالب علم اندراج کریں
+window.addStudent = async () => {
+  const rollNo = document.getElementById('rollNo').value.trim();
+  const name = document.getElementById('name').value.trim();
+  const admissionDate = document.getElementById('admissionDate').value;
+  const classType = document.getElementById('classType').value;
+  const className = document.getElementById('class').value.trim();
+  
+  if (!rollNo || !name || !admissionDate || !classType || !className) {
+    alert('رول نمبر، نام، تاریخ اندراج، کلاس کی قسم اور کلاس ضروری ہے');
+    return;
+  }
+  
+  // چیک کریں کہ رول نمبر پہلے سے موجود تو نہیں
+  const existingRef = ref(db, 'students/' + rollNo);
+  const exists = await get(existingRef);
+  if (exists.exists()) {
+    alert('❌ یہ رول نمبر پہلے سے موجود ہے!');
+    return;
+  }
+  
+  const studentData = {
+    rollNo: rollNo,
+    name: name,
+    fatherName: document.getElementById('fatherName').value,
+    age: document.getElementById('age').value,
+    class: className,
+    classType: classType,
+    serialNo: document.getElementById('serialNo').value,
+    admissionDate: admissionDate,
+    status: 'active',
+    createdAt: Date.now(),
+    createdBy: auth.currentUser?.email || 'admin'
+  };
+  
+  try {
+    await set(ref(db, 'students/' + rollNo), studentData);
+    alert('✅ طالب علم کامیابی سے درج ہوگیا!');
+    clearAdmissionForm();
+    loadAllStudents();
+  } catch (error) {
+    alert('❌ خرابی: ' + error.message);
+  }
+};
+
+// طالب علم خارج کریں
+window.markKharaj = async () => {
+  const rollNo = document.getElementById('kharajRoll').value.trim();
+  const kharajDate = document.getElementById('kharajDate').value;
+  const kharajReason = document.getElementById('kharajReason').value;
+  
+  if (!rollNo || !kharajDate || !kharajReason) {
+    alert('براہ کرم تمام ضروری فیلڈز درج کریں');
+    return;
+  }
+  
+  try {
+    const studentRef = ref(db, 'students/' + rollNo);
+    const snapshot = await get(studentRef);
+    
+    if (!snapshot.exists()) {
+      alert('❌ یہ رول نمبر موجود نہیں ہے!');
+      return;
+    }
+    
+    const student = snapshot.val();
+    if (student.status === 'kharaj') {
+      alert('❌ یہ طالب علم پہلے ہی خارج ہوچکا ہے!');
+      return;
+    }
+    
+    const kharajData = {
+      status: 'kharaj',
+      kharajDate: kharajDate,
+      kharajReason: kharajReason,
+      duration: document.getElementById('duration').value,
+      kharajAt: Date.now()
+    };
+    
+    await update(studentRef, kharajData);
+    
+    // خارج شدہ طلباء کی علیحدہ فہرست میں محفوظ کریں
+    await set(ref(db, 'kharajStudents/' + rollNo), {
+      ...student,
+      ...kharajData
+    });
+    
+    alert(`✅ طالب علم خارج کردیا گیا!`);
+    clearKharajForm();
+    loadAllStudents();
+  } catch (error) {
+    alert('❌ خرابی: ' + error.message);
+  }
+};
+
+// خارج شدہ طالب علم ڈیلیٹ کریں
+window.deleteKharajStudent = async () => {
+  const rollNo = document.getElementById('deleteRoll').value.trim();
+  
+  if (!rollNo) {
+    alert('براہ کرم رول نمبر درج کریں');
+    return;
+  }
+  
+  if (!confirm(`کیا آپ واقعی رول نمبر "${rollNo}" کے تمام ڈیٹا کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہوسکتا۔`)) {
+    return;
+  }
+  
+  try {
+    // پہلے چیک کریں کہ طالب علم خارج شدہ ہے
+    const studentRef = ref(db, 'students/' + rollNo);
+    const snapshot = await get(studentRef);
+    
+    if (!snapshot.exists()) {
+      alert('❌ یہ رول نمبر موجود نہیں ہے!');
+      return;
+    }
+    
+    const student = snapshot.val();
+    if (student.status !== 'kharaj') {
+      alert('❌ صرف خارج شدہ طلباء کا ڈیٹا ڈیلیٹ ہوسکتا ہے!');
+      return;
+    }
+    
+    // اصل فہرست سے ڈیلیٹ
+    await remove(ref(db, 'students/' + rollNo));
+    
+    // خارج شدہ فہرست سے ڈیلیٹ
+    await remove(ref(db, 'kharajStudents/' + rollNo));
+    
+    alert(`✅ طالب علم کا تمام ڈیٹا حذف کردیا گیا!`);
+    document.getElementById('deleteRoll').value = '';
+    loadAllStudents();
+  } catch (error) {
+    alert('❌ ڈیلیٹ کرنے میں خرابی: ' + error.message);
+  }
+};
+
+// ایکسل ڈاؤنلوڈ
+window.exportToExcel = async () => {
+  try {
+    const snapshot = await get(ref(db, 'students'));
+    
+    if (!snapshot.exists()) {
+      alert('کوئی ڈیٹا موجود نہیں ہے');
+      return;
+    }
+    
+    const students = snapshot.val();
+    
+    // تمام طلباء کی فہرست
+    const allStudents = [];
+    // فعال طلباء کی فہرست
+    const activeStudents = [];
+    // خارج شدہ طلباء کی فہرست
+    const outsideStudents = [];
+    // تیوشن کلاس کی فہرست
+    const tutionStudents = [];
+    // سپارہ کلاس کی فہرست
+    const separaStudents = [];
+    
+    for (const [rollNo, student] of Object.entries(students)) {
+      const row = {
+        'رول نمبر': rollNo,
+        'نام': student.name || '',
+        'والد کا نام': student.fatherName || '',
+        'عمر': student.age || '',
+        'کلاس': student.class || '',
+        'کلاس کی قسم': student.classType || '',
+        'سلسلہ نمبر': student.serialNo || '',
+        'تاریخ اندراج': student.admissionDate || '',
+        'حالت': student.status === 'active' ? 'فعال' : 'خارج',
+        'تاریخ خارج': student.kharajDate || '',
+        'وجہ خارج': student.kharajReason || '',
+        'مدت قیام': student.duration ? student.duration + ' ماہ' : '',
+        'تاریخ تخلیق': new Date(student.createdAt || Date.now()).toLocaleDateString('ur-PK'),
+        'درج کرنے والا': student.createdBy || ''
+      };
+      
+      allStudents.push(row);
+      
+      if (student.status === 'active') {
+        activeStudents.push(row);
+      } else {
+        outsideStudents.push(row);
+      }
+      
+      if (student.classType === 'تیوشن') {
+        tutionStudents.push(row);
+      } else if (student.classType === 'سپارہ') {
+        separaStudents.push(row);
+      }
+    }
+    
+    // Workbook تیار کریں
+    const wb = XLSX.utils.book_new();
+    
+    // شیٹس بنائیں
+    if (allStudents.length > 0) {
+      const allSheet = XLSX.utils.json_to_sheet(allStudents);
+      XLSX.utils.book_append_sheet(wb, allSheet, "تمام طلباء");
+    }
+    
+    if (activeStudents.length > 0) {
+      const activeSheet = XLSX.utils.json_to_sheet(activeStudents);
+      XLSX.utils.book_append_sheet(wb, activeSheet, "فعال طلباء");
+    }
+    
+    if (outsideStudents.length > 0) {
+      const outsideSheet = XLSX.utils.json_to_sheet(outsideStudents);
+      XLSX.utils.book_append_sheet(wb, outsideSheet, "خارج شدہ طلباء");
+    }
+    
+    if (tutionStudents.length > 0) {
+      const tutionSheet = XLSX.utils.json_to_sheet(tutionStudents);
+      XLSX.utils.book_append_sheet(wb, tutionSheet, "تیوشن کلاس");
+    }
+    
+    if (separaStudents.length > 0) {
+      const separaSheet = XLSX.utils.json_to_sheet(separaStudents);
+      XLSX.utils.book_append_sheet(wb, separaSheet, "سپارہ کلاس");
+    }
+    
+    // فائل ڈاؤنلوڈ کریں
+    const fileName = `مدرسہ_طلباء_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
+    alert('✅ ایکسل فائل ڈاؤنلوڈ ہوگئی! 5 شیٹس ہیں: 1) تمام طلباء 2) فعال طلباء 3) خارج شدہ طلباء 4) تیوشن کلاس 5) سپارہ کلاس');
+  } catch (error) {
+    alert('❌ ایکسل ڈاؤنلوڈ میں خرابی: ' + error.message);
+  }
+};
+
+// فارم صاف کریں
+function clearAdmissionForm() {
+  const fields = ['rollNo', 'name', 'fatherName', 'age', 'class', 'serialNo'];
+  fields.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.value = '';
+  });
+  document.getElementById('admissionDate').value = '';
+  document.getElementById('classType').value = '';
+}
+
+function clearKharajForm() {
+  const fields = ['kharajRoll', 'kharajDate', 'duration'];
+  fields.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.value = '';
+  });
+  document.getElementById('kharajReason').value = '';
+}
+
+// تاریخ سیٹ کریں
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  const admissionDate = document.getElementById('admissionDate');
+  const kharajDate = document.getElementById('kharajDate');
+  
+  if (admissionDate) admissionDate.value = today;
+  if (kharajDate) kharajDate.value = today;
+  
+  // سرچ بار سے ڈیٹا ہائیڈ کرنے کے لیے ایونٹ
+  document.getElementById('searchRoll').addEventListener('input', (e) => {
+    if (!e.target.value.trim()) {
+      document.getElementById('searchResults').classList.add('hidden');
+    }
+  });
+  
+  document.getElementById('searchName').addEventListener('input', (e) => {
+    if (!e.target.value.trim()) {
+      document.getElementById('searchResults').classList.add('hidden');
+    }
+  });
+});
+</script>
+</body>
+</html>
