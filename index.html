@@ -293,7 +293,7 @@
                         </div>
                         <div class="form-row">
                            <div class="form-row">
-                            <div class="form-group"><label class="form-label required">Department</label><input type="text" class="form-input" id="department" required></div>
+                            <div class="form-group"><label class="form-label required">Start From</label><input type="text" class="form-input" id="Startfrom" required></div>
                             <div class="form-group"><label class="form-label">Class/Section</label><input type="text" class="form-input" id="studentClass" placeholder="e.g., Class 10, Section A"></div>
                         </div>
                         </div>
@@ -306,7 +306,7 @@
                 <div class="card">
                     <div class="card-header"><i class="fas fa-users"></i><h2>Current Students</h2></div>
                     <div class="table-wrapper">
-                        <table><thead><tr><th>Roll No</th><th>Name</th><th>Father Name</th><th>Age</th><th>Department</th><th>Class</th><th>Entry Date</th><th>Actions</th></tr></thead>
+                        <table><thead><tr><th>Roll No</th><th>Name</th><th>Father Name</th><th>Age</th><th>Startfrom</th><th>Class</th><th>Entry Date</th><th>Actions</th></tr></thead>
                         <tbody id="studentsTableBody"></tbody></table>
                     </div>
                 </div>
@@ -353,7 +353,7 @@
                         <ul>
                             <li><strong>Current Students:</strong> All currently enrolled students</li>
                             <li><strong>Exited Students:</strong> All exited students with details</li>
-                            <li><strong>Department Wise:</strong> Students grouped by department</li>
+                            <li><strong>Startfrom Wise:</strong> Students grouped by Startfrom</li>
                             <li><strong>Class Wise:</strong> Students grouped by class</li>
                             <li><strong>Summary:</strong> Statistics and overview</li>
                         </ul>
@@ -611,11 +611,11 @@
             let roll = document.getElementById('rollNumber').value.trim();
             const name = document.getElementById('fullName').value.trim();
             const fatherName = document.getElementById('fatherName').value.trim();
-            const department = document.getElementById('department').value;
+            const Startfrom = document.getElementById('Startfrom').value;
             
             if (!name) { showMessage("Please enter student name", "error"); return; }
             if (!fatherName) { showMessage("Please enter father name", "error"); return; }
-            if (!department) { showMessage("Please select department", "error"); return; }
+            if (!Startfrom) { showMessage("Please select Startfrom", "error"); return; }
             
             // If roll is empty, auto-assign
             if (roll === '') {
@@ -643,7 +643,7 @@
                 fatherName: fatherName,
                 rollNumber: roll,
                 age: parseInt(document.getElementById('age').value) || 0,
-                department: department,
+                Startfrom: Startfrom,
                 studentClass: document.getElementById('studentClass').value || '',
                 entryDate: document.getElementById('entryDate').value || new Date().toISOString().split('T')[0],
                 originalRollNumber: roll,
@@ -677,7 +677,7 @@
             document.getElementById('fatherName').value = s.fatherName || '';
             document.getElementById('rollNumber').value = s.rollNumber || '';
             document.getElementById('age').value = s.age || '';
-            document.getElementById('department').value = s.department || '';
+            document.getElementById('Startfrom').value = s.Startfrom || '';
             document.getElementById('studentClass').value = s.studentClass || '';
             document.getElementById('entryDate').value = s.entryDate || '';
             editStudentId = id;
@@ -721,7 +721,7 @@
                 <p style="color: #666; margin-bottom: 15px;"><strong>Exit Student:</strong> ${student.fullName}</p>
                 <p><strong>Father Name:</strong> ${student.fatherName}</p>
                 <p><strong>Current Roll:</strong> <span style="font-weight: 700; color: var(--primary);">${student.rollNumber}</span></p>
-                <p><strong>Department:</strong> ${student.department}</p>
+                <p><strong>Startfrom:</strong> ${student.Startfrom}</p>
                 <div style="background: #f5f7fa; padding: 10px; border-radius: 8px; margin: 10px 0;">
                     <p style="font-size: 13px; color: #555;">After exit, higher rolls will shift down automatically.</p>
                 </div>
@@ -744,7 +744,7 @@
                 studentName: studentToExit.fullName,
                 fatherName: studentToExit.fatherName,
                 age: studentToExit.age,
-                department: studentToExit.department,
+                Startfrom: studentToExit.Startfrom,
                 studentClass: studentToExit.studentClass,
                 entryDate: studentToExit.entryDate,
                 exitDate: exitDate,
@@ -812,7 +812,7 @@
                     <td>${s.fullName}</td>
                     <td>${s.fatherName}</td>
                     <td>${s.age}</td>
-                    <td>${s.department}</td>
+                    <td>${s.Startfrom}</td>
                     <td>${s.studentClass || '-'}</td>
                     <td>${s.entryDate}</td>
                     <td><div class="action-buttons">
@@ -883,7 +883,7 @@
                     'Student Name': s.fullName,
                     'Father Name': s.fatherName,
                     'Age': s.age,
-                    'Department': s.department,
+                    'Startfrom': s.Startfrom,
                     'Class/Section': s.studentClass || 'N/A',
                     'Entry Date': s.entryDate
                 }));
@@ -898,7 +898,7 @@
                     'Student Name': e.studentName,
                     'Father Name': e.fatherName,
                     'Age': e.age,
-                    'Department': e.department,
+                    'Startfrom': e.Startfrom,
                     'Entry Date': e.entryDate,
                     'Exit Date': e.exitDate,
                     'Duration': e.duration,
@@ -907,23 +907,23 @@
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exitedStudentsData), 'Exited Students');
             }
             
-            // Department Wise Sheet
+            // Startfrom Wise Sheet
             if (students.length > 0) {
-                const departmentGroups = {};
+                const StartfromGroups = {};
                 students.forEach(s => {
-                    if (!departmentGroups[s.department]) {
-                        departmentGroups[s.department] = [];
+                    if (!StartfromGroups[s.Startfrom]) {
+                        StartfromGroups[s.Startfrom] = [];
                     }
-                    departmentGroups[s.department].push(s);
+                    StartfromGroups[s.Startfrom].push(s);
                 });
                 
-                const departmentData = [];
-                Object.keys(departmentGroups).forEach(dept => {
-                    departmentData.push([`Department: ${dept}`]);
-                    departmentData.push(['Roll No', 'Name', 'Father Name', 'Age', 'Class', 'Entry Date']);
-                    departmentGroups[dept].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber))
+                const StartfromData = [];
+                Object.keys(StartfromGroups).forEach(dept => {
+                    StartfromData.push([`Startfrom: ${dept}`]);
+                    StartfromData.push(['Roll No', 'Name', 'Father Name', 'Age', 'Class', 'Entry Date']);
+                    StartfromGroups[dept].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber))
                         .forEach(s => {
-                            departmentData.push([
+                            StartfromData.push([
                                 s.rollNumber,
                                 s.fullName,
                                 s.fatherName,
@@ -932,9 +932,9 @@
                                 s.entryDate
                             ]);
                         });
-                    departmentData.push([]);
+                    StartfromData.push([]);
                 });
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(departmentData), 'Department Wise');
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(StartfromData), 'Startfrom Wise');
             }
             
             // Class Wise Sheet
@@ -951,7 +951,7 @@
                 const classData = [];
                 Object.keys(classGroups).forEach(cls => {
                     classData.push([`Class: ${cls}`]);
-                    classData.push(['Roll No', 'Name', 'Father Name', 'Age', 'Department', 'Entry Date']);
+                    classData.push(['Roll No', 'Name', 'Father Name', 'Age', 'Startfrom', 'Entry Date']);
                     classGroups[cls].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber))
                         .forEach(s => {
                             classData.push([
@@ -959,7 +959,7 @@
                                 s.fullName,
                                 s.fatherName,
                                 s.age,
-                                s.department,
+                                s.Startfrom,
                                 s.entryDate
                             ]);
                         });
@@ -979,17 +979,17 @@
                 ['Current Students:', students.length],
                 ['Exited Students:', exits.length],
                 [],
-                ['DEPARTMENT WISE COUNT (Current Students):']
+                ['Startfrom WISE COUNT (Current Students):']
             ];
             
-            // Department counts
+            // Startfrom counts
             if (students.length > 0) {
                 const deptCounts = {};
                 students.forEach(s => {
-                    deptCounts[s.department] = (deptCounts[s.department] || 0) + 1;
+                    deptCounts[s.Startfrom] = (deptCounts[s.Startfrom] || 0) + 1;
                 });
                 
-                summaryData.push(['Department', 'Count']);
+                summaryData.push(['Startfrom', 'Count']);
                 Object.keys(deptCounts).forEach(dept => {
                     summaryData.push([dept, deptCounts[dept]]);
                 });
