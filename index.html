@@ -1,838 +1,1865 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مدرسہ مینجمنٹ سسٹم</title>
-<style>
-body{font-family:Arial;direction:rtl;margin:0;padding:20px;background:#f0f2f5}
-.container{max-width:1000px;margin:auto;background:white;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.1);overflow:hidden}
-.header{background:linear-gradient(135deg,#1a5f7a,#1597bb);color:white;padding:20px;text-align:center}
-.header h1{margin:0;font-size:24px}
-.header p{margin:5px 0 0;opacity:0.9}
-.content{padding:20px}
-.box{background:#f8f9fa;border-radius:10px;padding:20px;margin-bottom:20px;border:1px solid #e0e0e0}
-.box-title{color:#1a5f7a;font-size:18px;margin:0 0 15px 0;padding-bottom:8px;border-bottom:2px solid #17a2b8}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px}
-.form-group{margin-bottom:12px}
-label{display:block;margin-bottom:6px;color:#495057;font-weight:500;font-size:13px}
-input,select,textarea{width:100%;padding:10px;border:1px solid #dee2e6;border-radius:6px;font-size:13px}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#17a2b8}
-.btn{padding:10px 20px;border:none;border-radius:6px;font-size:14px;cursor:pointer;transition:0.3s;margin:5px}
-.btn-search{background:#28a745;color:white}
-.btn-search:hover{background:#218838}
-.btn-submit{background:#007bff;color:white}
-.btn-submit:hover{background:#0056b3}
-.btn-delete{background:#dc3545;color:white}
-.btn-delete:hover{background:#c82333}
-.btn-logout{background:#6c757d;color:white}
-.btn-logout:hover{background:#545b62}
-.btn-excel{background:#20c997;color:white}
-.btn-excel:hover{background:#17a589}
-.search-results{background:white;border-radius:8px;padding:15px;margin-top:15px;border:1px solid #dee2e6}
-.student-card{background:#f8f9fa;border-radius:8px;padding:15px;margin-bottom:10px;border-left:4px solid #17a2b8}
-.kharaj-card{border-left-color:#dc3545;background:#fff3cd}
-.student-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
-.info-item{background:white;padding:8px;border-radius:5px;border:1px solid #eee}
-.info-label{font-size:11px;color:#6c757d;margin-bottom:2px}
-.info-value{font-weight:500;color:#212529;font-size:13px}
-.login-box{max-width:350px;margin:40px auto;padding:25px;background:white;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
-.hidden{display:none}
-.status-badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;display:inline-block}
-.active-badge{background:#d4edda;color:#155724}
-.kharaj-badge{background:#f8d7da;color:#721c24}
-.stats-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
-.stat-box{padding:15px;border-radius:8px;color:white;text-align:center}
-.stat-box.total{background:#1a5f7a}
-.stat-box.active{background:#28a745}
-.stat-box.outside{background:#dc3545}
-.stat-box.tution{background:#ffc107;color:#212529}
-.stat-box.separa{background:#17a2b8}
-.stat-number{font-size:28px;font-weight:bold;margin:5px 0}
-.stat-label{font-size:14px}
-.clear-search{background:#6c757d;color:white;border:none;padding:8px 15px;border-radius:4px;font-size:12px;cursor:pointer;margin-left:10px}
-.category-badge{padding:2px 8px;border-radius:10px;font-size:10px;margin-left:5px}
-.category-tution{background:#ffc107;color:#212529}
-.category-separa{background:#17a2b8;color:white}
-</style>
-<!-- SheetJS for Excel -->
-<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madrasa Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a237e; --primary-light: #534bae; --secondary: #3949ab;
+            --success: #2e7d32; --danger: #c62828; --warning: #f57c00; --info: #0277bd;
+            --light: #f5f7fa; --dark: #333; --card-bg: #fff; --border: #e0e0e0;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: system-ui, sans-serif; 
+            min-height: 100vh;
+            background: var(--light);
+        }
+        
+        /* Login Page Styles */
+        .login-page {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            width: 100%; max-width: 400px;
+        }
+        
+        .logo-card {
+            background: white; border-radius: 20px; padding: 30px; margin-bottom: 20px;
+            box-shadow: var(--shadow); text-align: center;
+        }
+        .logo { font-size: 40px; color: var(--primary); margin-bottom: 15px; }
+        .logo-text h1 { font-size: 24px; color: var(--primary); margin-bottom: 5px; }
+        .logo-text p { color: #666; font-size: 14px; }
+        
+        .login-card {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: var(--shadow);
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); }
+        .form-input {
+            width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 10px;
+            font-size: 16px; background: white; transition: all 0.3s;
+        }
+        .form-input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(57,73,171,0.1); }
+        
+        .btn {
+            width: 100%; padding: 16px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { 
+            background: linear-gradient(to right, var(--primary), var(--secondary)); 
+            color: white; margin-top: 10px;
+        }
+        
+        .notification {
+            padding: 15px; background: var(--success); color: white; border-radius: 10px;
+            margin-bottom: 20px; text-align: center; display: none; animation: slideDown 0.3s ease;
+        }
+        .notification.error { background: var(--danger); }
+        .notification.info { background: var(--primary); }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); 
+            border-radius: 50%; border-top-color: white; animation: spin 1s infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .password-toggle {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #777; cursor: pointer;
+        }
+        .password-wrapper { position: relative; }
+        
+        /* Main System Styles */
+        .main-system {
+            display: none; padding: 10px;
+        }
+        .container { max-width: 100%; margin: 0 auto; }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 18px 15px; border-radius: 15px; margin-bottom: 20px;
+            box-shadow: var(--shadow); position: relative;
+        }
+        
+        .user-info {
+            position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px;
+            font-size: 14px;
+        }
+        .user-info i { font-size: 16px; }
+        .logout-btn {
+            background: rgba(255,255,255,0.3); border: none; color: white; padding: 5px 10px;
+            border-radius: 10px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.4); }
+        
+        .stats-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 15px; }
+        .stat-card { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px; text-align: center; }
+        .stat-number { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        .stat-label { font-size: 12px; opacity: 0.9; }
+        
+        .mobile-tabs {
+            display: flex; overflow-x: auto; gap: 8px; padding-bottom: 5px; margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .mobile-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            flex: 0 0 auto; padding: 12px 18px; background: white; border: 2px solid var(--border);
+            border-radius: 25px; color: var(--primary); font-weight: 600; font-size: 14px;
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .content-section { display: none; animation: fadeIn 0.3s ease; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card { background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
+        .card-header i { color: var(--secondary); font-size: 22px; }
+        .card-header h2 { font-size: 18px; color: var(--primary); font-weight: 700; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); font-size: 14px; }
+        .required::after { content: " *"; color: var(--danger); }
+        
+        .roll-info { background: #fff8e1; border: 1px solid #ffd54f; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 13px; color: #5d4037; }
+        .roll-info i { color: #ff9800; margin-right: 8px; }
+        
+        .btn-system {
+            display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px;
+            border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; width: 100%;
+        }
+        .btn-system:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; border-radius: 10px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: var(--primary); color: white; padding: 14px 12px; text-align: left; font-weight: 600; font-size: 14px; position: sticky; top: 0; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        
+        .action-buttons { display: flex; gap: 6px; }
+        .action-btn {
+            padding: 6px 10px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+        }
+        .edit-btn { background: var(--warning); color: white; }
+        .delete-btn { background: var(--danger); color: white; }
+        .exit-btn { background: #2196f3; color: white; }
+        
+        .roll-display { font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; color: #666; }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; color: #ccc; }
+        
+        .sys-notification {
+            position: fixed; top: 20px; right: 20px; left: 20px; padding: 15px; background: var(--success);
+            color: white; border-radius: 10px; box-shadow: var(--shadow); display: none; z-index: 1000;
+            text-align: center; animation: slideDown 0.3s ease;
+        }
+        .sys-notification.error { background: var(--danger); }
+        .sys-notification.warning { background: var(--warning); }
+        .sys-notification.info { background: var(--info); }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+        }
+        .modal { background: white; border-radius: 15px; padding: 25px; max-width: 500px; width: 100%; animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--danger); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+        .modal-actions .btn-system { flex: 1; }
+        
+        .export-info { background: #e8f5e8; border: 1px solid #c8e6c9; border-radius: 8px; padding: 15px; margin: 15px 0; }
+        .reshuffle-status { background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 15px; margin: 15px 0; }
+        
+        @media (max-width: 480px) {
+            .form-row, .stats-bar { grid-template-columns: 1fr; }
+            .user-info { position: static; margin-bottom: 10px; justify-content: flex-end; }
+        }
+    </style>
 </head>
 <body>
-
-<div class="container">
-<div class="header">
-<h1>📚 مدرسہ مینجمنٹ سسٹم</h1>
-<p>طالب علموں کی اندراج اور انتظام</p>
-</div>
-
-<div class="content">
-<!-- سرچ سیکشن -->
-<div class="box">
-<div class="box-title">🔍 طالب علم تلاش کریں</div>
-<div class="form-grid">
-<div class="form-group">
-<label>رول نمبر درج کریں</label>
-<input type="text" id="searchRoll" placeholder="رول نمبر درج کریں">
-</div>
-<div class="form-group">
-<label>یا نام درج کریں</label>
-<input type="text" id="searchName" placeholder="طالب علم کا نام">
-</div>
-</div>
-<button class="btn btn-search" onclick="searchStudent()">تلاش کریں</button>
-<button class="clear-search" onclick="clearSearch()">تلاش صاف کریں</button>
-<div id="searchResults" class="search-results hidden">
-<h3 style="margin-top:0;color:#1a5f7a">تلاش کے نتائج:</h3>
-<div id="searchResultsContent"></div>
-</div>
-</div>
-
-<!-- لاگ ان سیکشن -->
-<div class="login-box" id="loginBox">
-<h2 style="text-align:center;color:#1a5f7a;margin-bottom:20px">🔐 ایڈمن لاگ ان</h2>
-<div class="form-group">
-<label>ای میل</label>
-<input type="email" id="email" placeholder="admin@example.com" value="admin@example.com">
-</div>
-<div class="form-group">
-<label>پاس ورڈ</label>
-<input type="password" id="password" placeholder="پاس ورڈ" value="admin123">
-</div>
-<button class="btn btn-submit" style="width:100%;margin-top:15px" onclick="login()">لاگ ان کریں</button>
-</div>
-
-<!-- ایڈمن پینل -->
-<div id="adminPanel" class="hidden">
-<!-- احصائيات -->
-<div class="stats-container" id="statsContainer"></div>
-
-<!-- ایکسل ڈاؤنلوڈ -->
-<div class="box">
-<div class="box-title">📊 ڈیٹا مینجمنٹ</div>
-<button class="btn btn-excel" onclick="exportToExcel()">📥 ایکسل فائل ڈاؤنلوڈ کریں</button>
-<p style="color:#666;font-size:12px;margin-top:10px">ایک فائل میں 5 شیٹس ہوں گی: تمام طلباء، فعال طلباء، خارج شدہ طلباء، تیوشن کلاس، سپارہ کلاس</p>
-</div>
-
-<!-- طلباء کی لسٹ باکسز -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px;margin-bottom:20px">
-<div class="box">
-<div class="box-title">👨‍🎓 فعال طلباء</div>
-<div id="activeStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
-</div>
-<div class="box">
-<div class="box-title">🚪 خارج شدہ طلباء</div>
-<div id="outsideStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
-</div>
-</div>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px;margin-bottom:20px">
-<div class="box">
-<div class="box-title">📖 تیوشن کلاس</div>
-<div id="tutionStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
-</div>
-<div class="box">
-<div class="box-title">📚 سپارہ کلاس</div>
-<div id="separaStudentsList" class="students-list" style="max-height:300px;overflow-y:auto"></div>
-</div>
-</div>
-
-<!-- اندراج فارم -->
-<div class="box">
-<div class="box-title">➕ نئی طالب علم اندراج</div>
-<div class="form-grid">
-<div class="form-group">
-<label>رول نمبر *</label>
-<input type="text" id="rollNo" required>
-</div>
-<div class="form-group">
-<label>طالب علم کا نام *</label>
-<input type="text" id="name" required>
-</div>
-<div class="form-group">
-<label>والد کا نام</label>
-<input type="text" id="fatherName">
-</div>
-<div class="form-group">
-<label>عمر</label>
-<input type="number" id="age">
-</div>
-</div>
-<div class="form-grid">
-<div class="form-group">
-<label>کلاس (ایڈمن لکھے) *</label>
-<input type="text" id="class" placeholder="مثال: نورانی قاعدہ، حفظ قرآن" required>
-</div>
-<div class="form-group">
-<label>کلاس کی قسم *</label>
-<select id="classType" required>
-<option value="">منتخب کریں</option>
-<option value="تیوشن">تیوشن</option>
-<option value="سپارہ">سپارہ</option>
-</select>
-</div>
-<div class="form-group">
-<label>سلسلہ نمبر</label>
-<input type="text" id="serialNo">
-</div>
-</div>
-<div class="form-grid">
-<div class="form-group">
-<label>تاریخ اندراج *</label>
-<input type="date" id="admissionDate" required>
-</div>
-</div>
-<button class="btn btn-submit" onclick="addStudent()">✅ اندراج محفوظ کریں</button>
-</div>
-
-<!-- خارج کرنے کا فارم -->
-<div class="box">
-<div class="box-title">🚪 طالب علم خارج کریں</div>
-<div class="form-grid">
-<div class="form-group">
-<label>رول نمبر *</label>
-<input type="text" id="kharajRoll" required>
-</div>
-<div class="form-group">
-<label>خارج ہونے کی تاریخ *</label>
-<input type="date" id="kharajDate" required>
-</div>
-</div>
-<div class="form-grid">
-<div class="form-group">
-<label>خارج ہونے کی وجہ *</label>
-<select id="kharajReason" required>
-<option value="">منتخب کریں</option>
-<option value="کورس مکمل">کورس مکمل</option>
-<option value="خاندانی وجوہات">خاندانی وجوہات</option>
-<option value="مدرسہ تبدیل">مدرسہ تبدیل</option>
-<option value="علالت">علالت</option>
-<option value="ہجرت">ہجرت</option>
-<option value="دیگر">دیگر</option>
-</select>
-</div>
-<div class="form-group">
-<label>مدت قیام (مہینوں میں)</label>
-<input type="number" id="duration" placeholder="مدرسہ میں رہنے کی مدت">
-</div>
-</div>
-<button class="btn btn-delete" onclick="markKharaj()">🚪 خارج کریں</button>
-</div>
-
-<!-- خارج شدہ طلباء ڈیلیٹ -->
-<div class="box">
-<div class="box-title">🗑️ خارج شدہ طالب علم ڈیلیٹ کریں</div>
-<div class="form-grid">
-<div class="form-group">
-<label>رول نمبر درج کریں</label>
-<input type="text" id="deleteRoll" placeholder="خارج شدہ طالب علم کا رول نمبر">
-</div>
-</div>
-<button class="btn btn-delete" onclick="deleteKharajStudent()">مکمل ڈیٹا ڈیلیٹ کریں</button>
-<p style="color:#666;font-size:12px;margin-top:10px">نوٹ: صرف خارج شدہ طلباء کا ڈیٹا ڈیلیٹ ہوسکتا ہے</p>
-</div>
-
-<!-- لاگ آؤٹ -->
-<div style="text-align:center;margin-top:20px;padding-top:15px;border-top:1px solid #eee">
-<button class="btn btn-logout" onclick="logout()">🚪 لاگ آؤٹ کریں</button>
-</div>
-</div>
-</div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getDatabase, ref, set, get, update, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAlXd1v5IZwaEROAdfKMXMUPflIorWV4Zg",
-  authDomain: "students-51da1.firebaseapp.com",
-  databaseURL: "https://students-51da1-default-rtdb.firebaseio.com",
-  projectId: "students-51da1",
-  storageBucket: "students-51da1.firebasestorage.app",
-  messagingSenderId: "785878911811",
-  appId: "1:785878911811:web:5a0a480d3ceca57976bdf6"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-
-// Authentication Functions
-window.login = async () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  
-  if (!email || !password) {
-    alert('براہ کرم ای میل اور پاس ورڈ درج کریں');
-    return;
-  }
-  
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert('✅ لاگ ان کامیاب!');
-  } catch (error) {
-    alert('❌ لاگ ان ناکام: ' + error.message);
-  }
-};
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById('loginBox').classList.add('hidden');
-    document.getElementById('adminPanel').classList.remove('hidden');
-    loadAllStudents();
-    updateStats();
-  } else {
-    document.getElementById('loginBox').classList.remove('hidden');
-    document.getElementById('adminPanel').classList.add('hidden');
-  }
-});
-
-window.logout = async () => {
-  try {
-    await signOut(auth);
-    alert('✅ لاگ آؤٹ کامیاب!');
-  } catch (error) {
-    alert('❌ لاگ آؤٹ میں خرابی');
-  }
-};
-
-// احصائيات اپڈیٹ کریں
-async function updateStats() {
-  try {
-    const snapshot = await get(ref(db, 'students'));
-    
-    if (!snapshot.exists()) {
-      document.getElementById('statsContainer').innerHTML = `
-        <div class="stat-box total">
-          <div class="stat-number">0</div>
-          <div class="stat-label">کل طلباء</div>
+    <!-- Login Page -->
+    <div class="login-page" id="loginPage">
+        <div class="login-container">
+            <div class="logo-card">
+                <div class="logo"><i class="fas fa-sort-numeric-up-alt"></i></div>
+                <div class="logo-text">
+                    <h1>Madrasa Management</h1>
+                    <p>Auto Roll Number System (Starting from 0)</p>
+                </div>
+            </div>
+            
+            <div class="login-card">
+                <div class="notification" id="notification">Enter your credentials to login</div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-input" id="loginEmail" required placeholder="admin@madrasa.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-input" id="loginPassword" required placeholder="Enter password">
+                            <button type="button" class="password-toggle" id="toggleLoginPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i> Login to System
+                    </button>
+                </form>
+                
+                <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <p style="color: #666; font-size: 13px;">
+                        <i class="fas fa-info-circle"></i> Roll numbers start from 0
+                    </p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.8); font-size: 12px;">
+                <p>Authorized Access Only • Roll Numbers: 0, 1, 2, 3...</p>
+            </div>
         </div>
-        <div class="stat-box active">
-          <div class="stat-number">0</div>
-          <div class="stat-label">فعال طلباء</div>
-        </div>
-        <div class="stat-box outside">
-          <div class="stat-number">0</div>
-          <div class="stat-label">خارج شدہ</div>
-        </div>
-        <div class="stat-box tution">
-          <div class="stat-number">0</div>
-          <div class="stat-label">تیوشن کلاس</div>
-        </div>
-        <div class="stat-box separa">
-          <div class="stat-number">0</div>
-          <div class="stat-label">سپارہ کلاس</div>
-        </div>
-      `;
-      return;
-    }
-    
-    const students = snapshot.val();
-    let total = 0;
-    let active = 0;
-    let outside = 0;
-    let tution = 0;
-    let separa = 0;
-    
-    for (const student of Object.values(students)) {
-      total++;
-      if (student.status === 'active') {
-        active++;
-      } else {
-        outside++;
-      }
-      if (student.classType === 'تیوشن') {
-        tution++;
-      } else if (student.classType === 'سپارہ') {
-        separa++;
-      }
-    }
-    
-    document.getElementById('statsContainer').innerHTML = `
-      <div class="stat-box total">
-        <div class="stat-number">${total}</div>
-        <div class="stat-label">کل طلباء</div>
-      </div>
-      <div class="stat-box active">
-        <div class="stat-number">${active}</div>
-        <div class="stat-label">فعال طلباء</div>
-      </div>
-      <div class="stat-box outside">
-        <div class="stat-number">${outside}</div>
-        <div class="stat-label">خارج شدہ</div>
-      </div>
-      <div class="stat-box tution">
-        <div class="stat-number">${tution}</div>
-        <div class="stat-label">تیوشن کلاس</div>
-      </div>
-      <div class="stat-box separa">
-        <div class="stat-number">${separa}</div>
-        <div class="stat-label">سپارہ کلاس</div>
-      </div>
-    `;
-  } catch (error) {
-    console.error('Error updating stats:', error);
-  }
-}
-
-// طالب علم تلاش کریں (رول یا نام سے)
-window.searchStudent = async () => {
-  const roll = document.getElementById('searchRoll').value.trim();
-  const name = document.getElementById('searchName').value.trim();
-  
-  if (!roll && !name) {
-    alert('براہ کرم رول نمبر یا نام درج کریں');
-    return;
-  }
-  
-  try {
-    const studentsRef = ref(db, 'students');
-    const snapshot = await get(studentsRef);
-    const resultsDiv = document.getElementById('searchResults');
-    const resultsContent = document.getElementById('searchResultsContent');
-    
-    resultsContent.innerHTML = '';
-    resultsDiv.classList.add('hidden');
-    
-    if (!snapshot.exists()) {
-      resultsContent.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی طالب علم موجود نہیں</div>';
-      resultsDiv.classList.remove('hidden');
-      return;
-    }
-    
-    const students = snapshot.val();
-    let found = false;
-    
-    for (const [rollNo, student] of Object.entries(students)) {
-      const matchRoll = roll && rollNo.includes(roll);
-      const matchName = name && student.name && student.name.toLowerCase().includes(name.toLowerCase());
-      
-      if (matchRoll || matchName) {
-        displayStudentCard(resultsContent, rollNo, student);
-        found = true;
-      }
-    }
-    
-    if (!found) {
-      resultsContent.innerHTML = '<div style="text-align:center;padding:15px;color:#666">طالب علم نہیں ملا</div>';
-    }
-    
-    resultsDiv.classList.remove('hidden');
-  } catch (error) {
-    alert('تلاش میں خرابی: ' + error.message);
-  }
-};
-
-// تلاش صاف کریں
-window.clearSearch = () => {
-  document.getElementById('searchRoll').value = '';
-  document.getElementById('searchName').value = '';
-  document.getElementById('searchResults').classList.add('hidden');
-  document.getElementById('searchResultsContent').innerHTML = '';
-};
-
-// طالب علم کارڈ دکھائیں
-function displayStudentCard(container, rollNo, student) {
-  const card = document.createElement('div');
-  card.className = `student-card ${student.status === 'kharaj' ? 'kharaj-card' : ''}`;
-  
-  const categoryBadge = student.classType === 'تیوشن' 
-    ? `<span class="category-badge category-tution">تیوشن</span>`
-    : `<span class="category-badge category-separa">سپارہ</span>`;
-  
-  card.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <h3 style="margin:0;color:#1a5f7a;font-size:16px">
-        ${student.name} (رول: ${rollNo}) ${categoryBadge}
-      </h3>
-      <span class="status-badge ${student.status === 'active' ? 'active-badge' : 'kharaj-badge'}">
-        ${student.status === 'active' ? 'فعال' : 'خارج'}
-      </span>
     </div>
-    <div class="student-info">
-      <div class="info-item">
-        <div class="info-label">والد کا نام</div>
-        <div class="info-value">${student.fatherName || '--'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">عمر</div>
-        <div class="info-value">${student.age || '--'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">کلاس</div>
-        <div class="info-value">${student.class || '--'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">کلاس کی قسم</div>
-        <div class="info-value">${student.classType || '--'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">سلسلہ نمبر</div>
-        <div class="info-value">${student.serialNo || '--'}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">تاریخ اندراج</div>
-        <div class="info-value">${student.admissionDate || '--'}</div>
-      </div>
-      ${student.status === 'kharaj' ? `
-        <div class="info-item">
-          <div class="info-label">تاریخ خارج</div>
-          <div class="info-value">${student.kharajDate || '--'}</div>
+
+    <!-- Main System (Hidden Initially) -->
+    <div class="main-system" id="mainSystem">
+        <div class="container">
+            <header class="header">
+                <div class="logo" style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <i class="fas fa-sort-numeric-up-alt" style="font-size: 28px;"></i>
+                    <div><h1 style="font-size: 18px; font-weight: 700;">Madrasa Management</h1><p style="font-size: 12px; opacity: 0.9;">Roll Numbers Start from 0</p></div>
+                </div>
+                
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+                
+                <div class="stats-bar">
+                    <div class="stat-card"><div class="stat-number" id="totalStudents">0</div><div class="stat-label">Total Students</div></div>
+                    <div class="stat-card"><div class="stat-number" id="currentStudents">0</div><div class="stat-label">Current Students</div></div>
+                    <div class="stat-card"><div class="stat-number" id="exitedStudents">0</div><div class="stat-label">Exited Students</div></div>
+                </div>
+            </header>
+
+            <div class="mobile-tabs">
+                <button class="tab-btn active" data-tab="students"><i class="fas fa-user-graduate"></i><span>Students</span></button>
+                <button class="tab-btn" data-tab="exit"><i class="fas fa-sign-out-alt"></i><span>Exit</span></button>
+                <button class="tab-btn" data-tab="export"><i class="fas fa-file-excel"></i><span>Export</span></button>
+            </div>
+
+            <section class="content-section active" id="students">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-user-plus"></i><h2>Add / Edit Student</h2></div>
+                    <div class="roll-info"><i class="fas fa-info-circle"></i><strong>Note:</strong> Roll numbers start from 0. Leave empty for auto-assignment.</div>
+                    <div class="reshuffle-status"><h4><i class="fas fa-random"></i> Auto Roll Reshuffling</h4><ul><li>When a student exits, their roll number becomes vacant</li><li>All higher roll numbers automatically shift down</li><li>No gaps in roll number sequence</li></ul></div>
+                    <form id="studentForm">
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label required">Full Name</label><input type="text" class="form-input" id="fullName" required></div>
+                            <div class="form-group"><label class="form-label required">Father Name</label><input type="text" class="form-input" id="fatherName" required></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Roll Number</label><input type="number" class="form-input" id="rollNumber" placeholder="Auto-assign if empty" min="0"></div>
+                            <div class="form-group"><label class="form-label required">Age</label><input type="number" class="form-input" id="age" min="5" max="60" required></div>
+                        </div>
+                        <div class="form-row">
+                           <div class="form-row">
+                            <div class="form-group"><label class="form-label required">Department</label><input type="text" class="form-input" id="department" required></div>
+                            <div class="form-group"><label class="form-label">Class/Section</label><input type="text" class="form-input" id="studentClass" placeholder="e.g., Class 10, Section A"></div>
+                        </div>
+                        </div>
+                        <div class="form-group"><label class="form-label">Entry Date</label><input type="date" class="form-input" id="entryDate"></div>
+                        <input type="hidden" id="studentId">
+                        <button type="submit" class="btn-system btn-primary" id="saveBtn"><i class="fas fa-save"></i> Save Student</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-users"></i><h2>Current Students</h2></div>
+                    <div class="table-wrapper">
+                        <table><thead><tr><th>Roll No</th><th>Name</th><th>Father Name</th><th>Age</th><th>Department</th><th>Class</th><th>Entry Date</th><th>Actions</th></tr></thead>
+                        <tbody id="studentsTableBody"></tbody></table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section" id="exit">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-door-open"></i><h2>Mark Student Exit</h2></div>
+                    <div class="reshuffle-status"><h4><i class="fas fa-exchange-alt"></i> Roll Number Reshuffle</h4><p style="color: #1976d2; font-size: 14px;"><i class="fas fa-info-circle"></i> When you mark a student as exited, their roll number will be freed.</p></div>
+                    <form id="exitForm">
+                        <div class="form-group"><label class="form-label required">Student Roll Number</label><input type="number" class="form-input" id="exitRollNumber" required min="0"></div>
+                        <div class="form-group"><label class="form-label required">Reason for Exit</label>
+                            <select class="form-input" id="exitReason" required>
+                                <option value="">Select Reason</option>
+                                <option value="Completed Education">Completed Education</option>
+                                <option value="Transferred to Another Madrasa">Transferred to Another Madrasa</option>
+                                <option value="Family Reasons">Family Reasons</option>
+                                <option value="Financial Issues">Financial Issues</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label required">Exit Date</label><input type="date" class="form-input" id="exitDate" required></div>
+                            <div class="form-group"><label class="form-label">Duration</label><input type="text" class="form-input" id="duration" readonly style="background: #f5f5f5;"></div>
+                        </div>
+                        <button type="submit" class="btn-system btn-danger"><i class="fas fa-sign-out-alt"></i> Mark as Exited</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-history"></i><h2>Exit History</h2></div>
+                    <div class="table-wrapper">
+                        <table><thead><tr><th>Roll No</th><th>Name</th><th>Father Name</th><th>Exit Date</th><th>Duration</th><th>Reason</th><th>Actions</th></tr></thead>
+                        <tbody id="exitHistoryBody"></tbody></table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section" id="export">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-file-excel"></i><h2>Export Complete Report</h2></div>
+                    <div class="export-info">
+                        <h4><i class="fas fa-layer-group"></i> Excel Sheets Included:</h4>
+                        <ul>
+                            <li><strong>Current Students:</strong> All currently enrolled students</li>
+                            <li><strong>Exited Students:</strong> All exited students with details</li>
+                            <li><strong>Department Wise:</strong> Students grouped by department</li>
+                            <li><strong>Class Wise:</strong> Students grouped by class</li>
+                            <li><strong>Summary:</strong> Statistics and overview</li>
+                        </ul>
+                    </div>
+                    <button class="btn-system btn-success" id="exportReport"><i class="fas fa-file-excel"></i> Export Excel Report</button>
+                </div>
+            </section>
+
+            <div class="sys-notification" id="sysNotification">Operation successful!</div>
+
+            <div class="modal-overlay" id="exitModal">
+                <div class="modal">
+                    <div class="modal-header"><i class="fas fa-exchange-alt" style="font-size: 24px; color: var(--warning);"></i><h2 style="font-size: 18px;">Confirm Student Exit</h2></div>
+                    <div id="exitModalContent"></div>
+                    <div style="margin-top: 15px; padding: 15px; background: #fff8e1; border-radius: 10px; border: 1px solid #ffd54f;">
+                        <p style="color: var(--warning); font-size: 14px;"><i class="fas fa-exchange-alt"></i> <strong>Roll Numbers will be reshuffled!</strong></p>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-system btn-danger" id="confirmExit"><i class="fas fa-door-open"></i> Confirm & Reshuffle</button>
+                        <button class="btn-system" id="cancelExit" style="background: #eee; color: #333;">Cancel</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="info-item">
-          <div class="info-label">وجہ خارج</div>
-          <div class="info-value">${student.kharajReason || '--'}</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">مدت قیام</div>
-          <div class="info-value">${student.duration || '--'} ماہ</div>
-        </div>
-      ` : ''}
     </div>
-  `;
-  
-  container.appendChild(card);
-}
 
-// طلباء کی لسٹ لوڈ کریں
-async function loadAllStudents() {
-  try {
-    const snapshot = await get(ref(db, 'students'));
-    const activeList = document.getElementById('activeStudentsList');
-    const outsideList = document.getElementById('outsideStudentsList');
-    const tutionList = document.getElementById('tutionStudentsList');
-    const separaList = document.getElementById('separaStudentsList');
-    
-    if (!snapshot.exists()) {
-      activeList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی فعال طالب علم نہیں</div>';
-      outsideList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی خارج شدہ طالب علم نہیں</div>';
-      tutionList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی تیوشن کلاس طالب علم نہیں</div>';
-      separaList.innerHTML = '<div style="text-align:center;padding:15px;color:#666">کوئی سپارہ کلاس طالب علم نہیں</div>';
-      return;
-    }
-    
-    const students = snapshot.val();
-    let activeHtml = '';
-    let outsideHtml = '';
-    let tutionHtml = '';
-    let separaHtml = '';
-    
-    for (const [rollNo, student] of Object.entries(students)) {
-      const categoryBadge = student.classType === 'تیوشن' 
-        ? `<span class="category-badge category-tution" style="font-size:9px">تیوشن</span>`
-        : `<span class="category-badge category-separa" style="font-size:9px">سپارہ</span>`;
-      
-      const row = `
-        <div style="padding:8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <strong>${rollNo}</strong> - ${student.name}
-            <span style="font-size:10px;color:#666">(${student.class || '--'})</span>
-          </div>
-          <div>${categoryBadge}</div>
-        </div>
-      `;
-      
-      if (student.status === 'active') {
-        activeHtml += row;
-      } else {
-        outsideHtml += row;
-      }
-      
-      if (student.classType === 'تیوشن') {
-        tutionHtml += row;
-      } else if (student.classType === 'سپارہ') {
-        separaHtml += row;
-      }
-    }
-    
-    activeList.innerHTML = activeHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی فعال طالب علم نہیں</div>';
-    outsideList.innerHTML = outsideHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی خارج شدہ طالب علم نہیں</div>';
-    tutionList.innerHTML = tutionHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی تیوشن کلاس طالب علم نہیں</div>';
-    separaList.innerHTML = separaHtml || '<div style="text-align:center;padding:15px;color:#666">کوئی سپارہ کلاس طالب علم نہیں</div>';
-    
-    updateStats();
-  } catch (error) {
-    console.error('Error loading students:', error);
-  }
-}
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-nEluewFdw3LLyU1biNEZ1cKpFLKN7kg",
+            authDomain: "allstudentdata-e1a01.firebaseapp.com",
+            databaseURL: "https://allstudentdata-e1a01-default-rtdb.firebaseio.com",
+            projectId: "allstudentdata-e1a01",
+            storageBucket: "allstudentdata-e1a01.firebasestorage.app",
+            messagingSenderId: "894758025587",
+            appId: "1:894758025587:web:2012f2d47033a51d04ad06"
+        };
 
-// طالب علم اندراج کریں
-window.addStudent = async () => {
-  const rollNo = document.getElementById('rollNo').value.trim();
-  const name = document.getElementById('name').value.trim();
-  const admissionDate = document.getElementById('admissionDate').value;
-  const classType = document.getElementById('classType').value;
-  const className = document.getElementById('class').value.trim();
-  
-  if (!rollNo || !name || !admissionDate || !classType || !className) {
-    alert('رول نمبر، نام، تاریخ اندراج، کلاس کی قسم اور کلاس ضروری ہے');
-    return;
-  }
-  
-  // چیک کریں کہ رول نمبر پہلے سے موجود تو نہیں
-  const existingRef = ref(db, 'students/' + rollNo);
-  const exists = await get(existingRef);
-  if (exists.exists()) {
-    alert('❌ یہ رول نمبر پہلے سے موجود ہے!');
-    return;
-  }
-  
-  const studentData = {
-    rollNo: rollNo,
-    name: name,
-    fatherName: document.getElementById('fatherName').value,
-    age: document.getElementById('age').value,
-    class: className,
-    classType: classType,
-    serialNo: document.getElementById('serialNo').value,
-    admissionDate: admissionDate,
-    status: 'active',
-    createdAt: Date.now(),
-    createdBy: auth.currentUser?.email || 'admin'
-  };
-  
-  try {
-    await set(ref(db, 'students/' + rollNo), studentData);
-    alert('✅ طالب علم کامیابی سے درج ہوگیا!');
-    clearAdmissionForm();
-    loadAllStudents();
-  } catch (error) {
-    alert('❌ خرابی: ' + error.message);
-  }
-};
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        // Global variables
+        let students = [], exits = [], editStudentId = null, studentToExit = null;
+        let currentUser = null;
 
-// طالب علم خارج کریں
-window.markKharaj = async () => {
-  const rollNo = document.getElementById('kharajRoll').value.trim();
-  const kharajDate = document.getElementById('kharajDate').value;
-  const kharajReason = document.getElementById('kharajReason').value;
-  
-  if (!rollNo || !kharajDate || !kharajReason) {
-    alert('براہ کرم تمام ضروری فیلڈز درج کریں');
-    return;
-  }
-  
-  try {
-    const studentRef = ref(db, 'students/' + rollNo);
-    const snapshot = await get(studentRef);
-    
-    if (!snapshot.exists()) {
-      alert('❌ یہ رول نمبر موجود نہیں ہے!');
-      return;
-    }
-    
-    const student = snapshot.val();
-    if (student.status === 'kharaj') {
-      alert('❌ یہ طالب علم پہلے ہی خارج ہوچکا ہے!');
-      return;
-    }
-    
-    const kharajData = {
-      status: 'kharaj',
-      kharajDate: kharajDate,
-      kharajReason: kharajReason,
-      duration: document.getElementById('duration').value,
-      kharajAt: Date.now()
-    };
-    
-    await update(studentRef, kharajData);
-    
-    // خارج شدہ طلباء کی علیحدہ فہرست میں محفوظ کریں
-    await set(ref(db, 'kharajStudents/' + rollNo), {
-      ...student,
-      ...kharajData
-    });
-    
-    alert(`✅ طالب علم خارج کردیا گیا!`);
-    clearKharajForm();
-    loadAllStudents();
-  } catch (error) {
-    alert('❌ خرابی: ' + error.message);
-  }
-};
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const mainSystem = document.getElementById('mainSystem');
+        const loginNotification = document.getElementById('notification');
+        const sysNotification = document.getElementById('sysNotification');
+        const userNameElement = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupLoginEvents();
+            setupMainSystemEvents();
+            checkAuthState();
+        });
 
-// خارج شدہ طالب علم ڈیلیٹ کریں
-window.deleteKharajStudent = async () => {
-  const rollNo = document.getElementById('deleteRoll').value.trim();
-  
-  if (!rollNo) {
-    alert('براہ کرم رول نمبر درج کریں');
-    return;
-  }
-  
-  if (!confirm(`کیا آپ واقعی رول نمبر "${rollNo}" کے تمام ڈیٹا کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہوسکتا۔`)) {
-    return;
-  }
-  
-  try {
-    // پہلے چیک کریں کہ طالب علم خارج شدہ ہے
-    const studentRef = ref(db, 'students/' + rollNo);
-    const snapshot = await get(studentRef);
-    
-    if (!snapshot.exists()) {
-      alert('❌ یہ رول نمبر موجود نہیں ہے!');
-      return;
-    }
-    
-    const student = snapshot.val();
-    if (student.status !== 'kharaj') {
-      alert('❌ صرف خارج شدہ طلباء کا ڈیٹا ڈیلیٹ ہوسکتا ہے!');
-      return;
-    }
-    
-    // اصل فہرست سے ڈیلیٹ
-    await remove(ref(db, 'students/' + rollNo));
-    
-    // خارج شدہ فہرست سے ڈیلیٹ
-    await remove(ref(db, 'kharajStudents/' + rollNo));
-    
-    alert(`✅ طالب علم کا تمام ڈیٹا حذف کردیا گیا!`);
-    document.getElementById('deleteRoll').value = '';
-    loadAllStudents();
-  } catch (error) {
-    alert('❌ ڈیلیٹ کرنے میں خرابی: ' + error.message);
-  }
-};
+        // Check authentication state
+        function checkAuthState() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // User is logged in
+                    currentUser = user;
+                    showMainSystem(user);
+                    loadData();
+                } else {
+                    // User is not logged in
+                    showLoginPage();
+                }
+            });
+        }
 
-// ایکسل ڈاؤنلوڈ
-window.exportToExcel = async () => {
-  try {
-    const snapshot = await get(ref(db, 'students'));
-    
-    if (!snapshot.exists()) {
-      alert('کوئی ڈیٹا موجود نہیں ہے');
-      return;
-    }
-    
-    const students = snapshot.val();
-    
-    // تمام طلباء کی فہرست
-    const allStudents = [];
-    // فعال طلباء کی فہرست
-    const activeStudents = [];
-    // خارج شدہ طلباء کی فہرست
-    const outsideStudents = [];
-    // تیوشن کلاس کی فہرست
-    const tutionStudents = [];
-    // سپارہ کلاس کی فہرست
-    const separaStudents = [];
-    
-    for (const [rollNo, student] of Object.entries(students)) {
-      const row = {
-        'رول نمبر': rollNo,
-        'نام': student.name || '',
-        'والد کا نام': student.fatherName || '',
-        'عمر': student.age || '',
-        'کلاس': student.class || '',
-        'کلاس کی قسم': student.classType || '',
-        'سلسلہ نمبر': student.serialNo || '',
-        'تاریخ اندراج': student.admissionDate || '',
-        'حالت': student.status === 'active' ? 'فعال' : 'خارج',
-        'تاریخ خارج': student.kharajDate || '',
-        'وجہ خارج': student.kharajReason || '',
-        'مدت قیام': student.duration ? student.duration + ' ماہ' : '',
-        'تاریخ تخلیق': new Date(student.createdAt || Date.now()).toLocaleDateString('ur-PK'),
-        'درج کرنے والا': student.createdBy || ''
-      };
-      
-      allStudents.push(row);
-      
-      if (student.status === 'active') {
-        activeStudents.push(row);
-      } else {
-        outsideStudents.push(row);
-      }
-      
-      if (student.classType === 'تیوشن') {
-        tutionStudents.push(row);
-      } else if (student.classType === 'سپارہ') {
-        separaStudents.push(row);
-      }
-    }
-    
-    // Workbook تیار کریں
-    const wb = XLSX.utils.book_new();
-    
-    // شیٹس بنائیں
-    if (allStudents.length > 0) {
-      const allSheet = XLSX.utils.json_to_sheet(allStudents);
-      XLSX.utils.book_append_sheet(wb, allSheet, "تمام طلباء");
-    }
-    
-    if (activeStudents.length > 0) {
-      const activeSheet = XLSX.utils.json_to_sheet(activeStudents);
-      XLSX.utils.book_append_sheet(wb, activeSheet, "فعال طلباء");
-    }
-    
-    if (outsideStudents.length > 0) {
-      const outsideSheet = XLSX.utils.json_to_sheet(outsideStudents);
-      XLSX.utils.book_append_sheet(wb, outsideSheet, "خارج شدہ طلباء");
-    }
-    
-    if (tutionStudents.length > 0) {
-      const tutionSheet = XLSX.utils.json_to_sheet(tutionStudents);
-      XLSX.utils.book_append_sheet(wb, tutionSheet, "تیوشن کلاس");
-    }
-    
-    if (separaStudents.length > 0) {
-      const separaSheet = XLSX.utils.json_to_sheet(separaStudents);
-      XLSX.utils.book_append_sheet(wb, separaSheet, "سپارہ کلاس");
-    }
-    
-    // فائل ڈاؤنلوڈ کریں
-    const fileName = `مدرسہ_طلباء_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    
-    alert('✅ ایکسل فائل ڈاؤنلوڈ ہوگئی! 5 شیٹس ہیں: 1) تمام طلباء 2) فعال طلباء 3) خارج شدہ طلباء 4) تیوشن کلاس 5) سپارہ کلاس');
-  } catch (error) {
-    alert('❌ ایکسل ڈاؤنلوڈ میں خرابی: ' + error.message);
-  }
-};
+        // Show login page
+        function showLoginPage() {
+            loginPage.style.display = 'flex';
+            mainSystem.style.display = 'none';
+            
+            // Auto-focus email field
+            setTimeout(() => {
+                document.getElementById('loginEmail').focus();
+            }, 100);
+        }
 
-// فارم صاف کریں
-function clearAdmissionForm() {
-  const fields = ['rollNo', 'name', 'fatherName', 'age', 'class', 'serialNo'];
-  fields.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) element.value = '';
-  });
-  document.getElementById('admissionDate').value = '';
-  document.getElementById('classType').value = '';
-}
+        // Show main system
+        function showMainSystem(user) {
+            loginPage.style.display = 'none';
+            mainSystem.style.display = 'block';
+            
+            // Set user info
+            userNameElement.textContent = user.email || 'User';
+            
+            // Store user info in localStorage
+            localStorage.setItem('madrasaUser', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                lastLogin: new Date().toISOString()
+            }));
+            
+            // Set today's date
+            setTodayDates();
+        }
 
-function clearKharajForm() {
-  const fields = ['kharajRoll', 'kharajDate', 'duration'];
-  fields.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) element.value = '';
-  });
-  document.getElementById('kharajReason').value = '';
-}
+        // Setup login page events
+        function setupLoginEvents() {
+            // Password toggle functionality
+            document.getElementById('toggleLoginPassword').addEventListener('click', function() {
+                const passwordInput = document.getElementById('loginPassword');
+                const icon = this.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+            
+            // Handle Login
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                
+                if (!email || !password) {
+                    showLoginMessage('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                const loginBtn = document.getElementById('loginBtn');
+                const originalText = loginBtn.innerHTML;
+                loginBtn.innerHTML = '<div class="loading"></div> Authenticating...';
+                loginBtn.disabled = true;
+                
+                // Firebase login
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        // Login successful
+                        showLoginMessage('Login successful! Loading system...', 'success');
+                        
+                        currentUser = userCredential.user;
+                        setTimeout(() => {
+                            showMainSystem(currentUser);
+                            loadData();
+                        }, 1000);
+                    })
+                    .catch((error) => {
+                        console.error('Login error:', error);
+                        
+                        let errorMessage = 'Login failed. ';
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessage += 'No account found with this email.';
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage += 'Incorrect password.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage += 'Invalid email format.';
+                                break;
+                            case 'auth/user-disabled':
+                                errorMessage += 'This account has been disabled.';
+                                break;
+                            default:
+                                errorMessage += error.message;
+                        }
+                        
+                        showLoginMessage(errorMessage, 'error');
+                        loginBtn.innerHTML = originalText;
+                        loginBtn.disabled = false;
+                    });
+            });
+        }
 
-// تاریخ سیٹ کریں
-document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date().toISOString().split('T')[0];
-  const admissionDate = document.getElementById('admissionDate');
-  const kharajDate = document.getElementById('kharajDate');
-  
-  if (admissionDate) admissionDate.value = today;
-  if (kharajDate) kharajDate.value = today;
-  
-  // سرچ بار سے ڈیٹا ہائیڈ کرنے کے لیے ایونٹ
-  document.getElementById('searchRoll').addEventListener('input', (e) => {
-    if (!e.target.value.trim()) {
-      document.getElementById('searchResults').classList.add('hidden');
-    }
-  });
-  
-  document.getElementById('searchName').addEventListener('input', (e) => {
-    if (!e.target.value.trim()) {
-      document.getElementById('searchResults').classList.add('hidden');
-    }
-  });
-});
-</script>
+        // Setup main system events
+        function setupMainSystemEvents() {
+            // Logout functionality
+            logoutBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to logout?')) {
+                    auth.signOut().then(() => {
+                        localStorage.removeItem('madrasaUser');
+                        currentUser = null;
+                        showLoginPage();
+                    }).catch((error) => {
+                        showMessage("Logout error: " + error.message, "error");
+                    });
+                }
+            });
+
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.content-section').forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId) content.classList.add('active');
+                    });
+                });
+            });
+
+            // Student form
+            document.getElementById('studentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveStudent();
+            });
+
+            // Exit form
+            document.getElementById('exitForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                prepareExit();
+            });
+
+            // Other event listeners
+            document.getElementById('exitRollNumber').addEventListener('input', updateExitDuration);
+            document.getElementById('exportReport').addEventListener('click', exportReport);
+            document.getElementById('confirmExit').addEventListener('click', confirmExit);
+            document.getElementById('cancelExit').addEventListener('click', () => document.getElementById('exitModal').style.display = 'none');
+            document.getElementById('exitModal').addEventListener('click', function(e) {
+                if (e.target === this) this.style.display = 'none';
+            });
+            
+            // Set today's dates
+            setTodayDates();
+        }
+
+        // Main system functions
+        function setTodayDates() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('entryDate').value = today;
+            document.getElementById('exitDate').value = today;
+        }
+
+        function getNextRoll() {
+            if (students.length === 0) return "0";
+            const rolls = students.map(s => parseInt(s.rollNumber)).filter(r => !isNaN(r));
+            if (rolls.length === 0) return "0";
+            
+            // Find the lowest missing roll number starting from 0
+            for (let i = 0; i <= Math.max(...rolls) + 1; i++) {
+                if (!rolls.includes(i)) return i.toString();
+            }
+            return (Math.max(...rolls) + 1).toString();
+        }
+
+        function saveStudent() {
+            const id = document.getElementById('studentId').value;
+            let roll = document.getElementById('rollNumber').value.trim();
+            const name = document.getElementById('fullName').value.trim();
+            const fatherName = document.getElementById('fatherName').value.trim();
+            const department = document.getElementById('department').value;
+            
+            if (!name) { showMessage("Please enter student name", "error"); return; }
+            if (!fatherName) { showMessage("Please enter father name", "error"); return; }
+            if (!department) { showMessage("Please select department", "error"); return; }
+            
+            // If roll is empty, auto-assign
+            if (roll === '') {
+                roll = getNextRoll();
+                showMessage(`Auto-assigned roll: ${roll}`, "info");
+            }
+            
+            const rollInt = parseInt(roll);
+            if (isNaN(rollInt) || rollInt < 0) { 
+                showMessage("Invalid roll number. Must be 0 or greater.", "error"); 
+                return; 
+            }
+            
+            // Check if roll already exists (only for new students)
+            if (!id) {
+                if (students.some(s => s.rollNumber === roll)) { 
+                    showMessage(`Roll ${roll} already exists. Please use another roll.`, "error"); 
+                    return; 
+                }
+            }
+            
+            const student = {
+                id: id || 'student_' + Date.now(),
+                fullName: name,
+                fatherName: fatherName,
+                rollNumber: roll,
+                age: parseInt(document.getElementById('age').value) || 0,
+                department: department,
+                studentClass: document.getElementById('studentClass').value || '',
+                entryDate: document.getElementById('entryDate').value || new Date().toISOString().split('T')[0],
+                originalRollNumber: roll,
+                createdAt: id ? students.find(s => s.id === id)?.createdAt || Date.now() : Date.now(),
+                updatedAt: Date.now(),
+                userId: currentUser.uid
+            };
+            
+            let newStudents = [...students];
+            if (id) {
+                const idx = newStudents.findIndex(s => s.id === id);
+                if (idx !== -1) newStudents[idx] = student;
+            } else {
+                newStudents.push(student);
+            }
+            
+            // Sort by roll number
+            newStudents.sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
+            saveToFirebase(newStudents, exits, "Student saved successfully!");
+            document.getElementById('studentForm').reset();
+            document.getElementById('studentId').value = '';
+            setTodayDates();
+            editStudentId = null;
+        }
+
+        function editStudent(id) {
+            const s = students.find(s => s.id === id);
+            if (!s) return;
+            document.getElementById('studentId').value = s.id;
+            document.getElementById('fullName').value = s.fullName || '';
+            document.getElementById('fatherName').value = s.fatherName || '';
+            document.getElementById('rollNumber').value = s.rollNumber || '';
+            document.getElementById('age').value = s.age || '';
+            document.getElementById('department').value = s.department || '';
+            document.getElementById('studentClass').value = s.studentClass || '';
+            document.getElementById('entryDate').value = s.entryDate || '';
+            editStudentId = id;
+            showMessage(`Editing: ${s.fullName}`, "success");
+        }
+
+        function deleteStudent(id) {
+            const s = students.find(s => s.id === id);
+            if (!s) return;
+            if (confirm(`Are you sure you want to delete ${s.fullName} (Roll: ${s.rollNumber})? This will trigger roll number reshuffle.`)) {
+                let newStudents = students.filter(s => s.id !== id);
+                newStudents = reshuffleRolls(newStudents, s.rollNumber);
+                saveToFirebase(newStudents, exits, `Deleted: ${s.fullName}`);
+            }
+        }
+
+        function reshuffleRolls(list, exitedRoll) {
+            const exitedInt = parseInt(exitedRoll);
+            list.sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
+            return list.map(s => {
+                const curr = parseInt(s.rollNumber);
+                if (curr > exitedInt) {
+                    return {...s, rollNumber: (curr - 1).toString()};
+                }
+                return s;
+            });
+        }
+
+        function prepareExit() {
+            const roll = document.getElementById('exitRollNumber').value.trim();
+            if (roll === '') { showMessage("Enter roll number", "error"); return; }
+            const student = students.find(s => s.rollNumber === roll);
+            if (!student) { showMessage(`Roll ${roll} not found`, "error"); return; }
+            studentToExit = student;
+            const exitDate = document.getElementById('exitDate').value;
+            let duration = "Not specified";
+            if (student.entryDate && exitDate) {
+                duration = calcDuration(student.entryDate, exitDate);
+            }
+            document.getElementById('exitModalContent').innerHTML = `
+                <p style="color: #666; margin-bottom: 15px;"><strong>Exit Student:</strong> ${student.fullName}</p>
+                <p><strong>Father Name:</strong> ${student.fatherName}</p>
+                <p><strong>Current Roll:</strong> <span style="font-weight: 700; color: var(--primary);">${student.rollNumber}</span></p>
+                <p><strong>Department:</strong> ${student.department}</p>
+                <div style="background: #f5f7fa; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                    <p style="font-size: 13px; color: #555;">After exit, higher rolls will shift down automatically.</p>
+                </div>
+            `;
+            document.getElementById('exitModal').style.display = 'flex';
+        }
+
+        function confirmExit() {
+            if (!studentToExit) return;
+            const reason = document.getElementById('exitReason').value;
+            const exitDate = document.getElementById('exitDate').value;
+            let duration = "Not specified";
+            if (studentToExit.entryDate && exitDate) {
+                duration = calcDuration(studentToExit.entryDate, exitDate);
+            }
+            const exitRecord = {
+                id: 'exit_' + Date.now(),
+                studentId: studentToExit.id,
+                rollNumber: studentToExit.rollNumber,
+                studentName: studentToExit.fullName,
+                fatherName: studentToExit.fatherName,
+                age: studentToExit.age,
+                department: studentToExit.department,
+                studentClass: studentToExit.studentClass,
+                entryDate: studentToExit.entryDate,
+                exitDate: exitDate,
+                reason: reason,
+                duration: duration,
+                exitTimestamp: Date.now(),
+                userId: currentUser.uid
+            };
+            let newExits = [...exits, exitRecord];
+            let newStudents = students.filter(s => s.id !== studentToExit.id);
+            newStudents = reshuffleRolls(newStudents, studentToExit.rollNumber);
+            saveToFirebase(newStudents, newExits, `${studentToExit.fullName} exited successfully. Roll numbers reshuffled.`);
+            document.getElementById('exitForm').reset();
+            setTodayDates();
+            document.getElementById('exitModal').style.display = 'none';
+            studentToExit = null;
+        }
+
+        function calcDuration(entry, exit) {
+            const diff = Math.ceil((new Date(exit) - new Date(entry)) / (1000 * 60 * 60 * 24));
+            const years = Math.floor(diff / 365);
+            const months = Math.floor((diff % 365) / 30);
+            const days = diff % 30;
+            let d = "";
+            if (years > 0) d += `${years} year${years > 1 ? 's' : ''} `;
+            if (months > 0) d += `${months} month${months > 1 ? 's' : ''} `;
+            if (days > 0 && years === 0) d += `${days} day${days > 1 ? 's' : ''}`;
+            return d.trim() || "Less than 1 day";
+        }
+
+        function updateExitDuration() {
+            const roll = document.getElementById('exitRollNumber').value.trim();
+            const exitDate = document.getElementById('exitDate').value;
+            if (!roll || !exitDate) return;
+            const student = students.find(s => s.rollNumber === roll);
+            if (!student || !student.entryDate) return;
+            document.getElementById('duration').value = calcDuration(student.entryDate, exitDate);
+        }
+
+        function deleteExitRecord(id) {
+            const exit = exits.find(e => e.id === id);
+            if (!exit) return;
+            if (confirm(`Delete exit record for ${exit.studentName}?`)) {
+                let newExits = exits.filter(e => e.id !== id);
+                saveToFirebase(students, newExits, "Exit record deleted");
+            }
+        }
+
+        function renderStudents() {
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+            if (students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fas fa-users-slash"></i><p>No current students. Add your first student!</p></td></tr>`;
+                return;
+            }
+            const sorted = [...students].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
+            sorted.forEach((s, idx) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <span class="roll-display" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;">
+                            ${s.rollNumber}
+                        </span>
+                    </td>
+                    <td>${s.fullName}</td>
+                    <td>${s.fatherName}</td>
+                    <td>${s.age}</td>
+                    <td>${s.department}</td>
+                    <td>${s.studentClass || '-'}</td>
+                    <td>${s.entryDate}</td>
+                    <td><div class="action-buttons">
+                        <button class="action-btn edit-btn" onclick="editStudent('${s.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteStudent('${s.id}')"><i class="fas fa-trash"></i> Delete</button>
+                        <button class="action-btn exit-btn" onclick="markForExit('${s.rollNumber}')"><i class="fas fa-sign-out-alt"></i> Exit</button>
+                    </div></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderExitHistory() {
+            const tbody = document.getElementById('exitHistoryBody');
+            tbody.innerHTML = '';
+            if (exits.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-history"></i><p>No exit records</p></td></tr>`;
+                return;
+            }
+            const sorted = [...exits].sort((a,b) => new Date(b.exitDate) - new Date(a.exitDate));
+            sorted.forEach(e => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="roll-display" style="background: #f5f5f5; color: #666; border: 1px solid #ddd;">${e.rollNumber}</span></td>
+                    <td>${e.studentName}</td>
+                    <td>${e.fatherName}</td>
+                    <td>${e.exitDate}</td>
+                    <td>${e.duration}</td>
+                    <td>${e.reason}</td>
+                    <td><div class="action-buttons"><button class="action-btn delete-btn" onclick="deleteExitRecord('${e.id}')"><i class="fas fa-trash"></i> Delete</button></div></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('totalStudents').textContent = students.length + exits.length;
+            document.getElementById('currentStudents').textContent = students.length;
+            document.getElementById('exitedStudents').textContent = exits.length;
+        }
+
+        function markForExit(roll) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="exit"]').classList.add('active');
+            document.querySelectorAll('.content-section').forEach(c => {
+                c.classList.remove('active');
+                if (c.id === 'exit') c.classList.add('active');
+            });
+            document.getElementById('exitRollNumber').value = roll;
+            updateExitDuration();
+            document.getElementById('exitReason').focus();
+        }
+
+        function exportReport() {
+            if (students.length === 0 && exits.length === 0) { 
+                showMessage("No data to export", "error"); 
+                return; 
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const today = new Date().toLocaleDateString();
+            
+            // Current Students Sheet
+            if (students.length > 0) {
+                const sortedStudents = [...students].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
+                const currentStudentsData = sortedStudents.map(s => ({
+                    'Roll Number': s.rollNumber,
+                    'Student Name': s.fullName,
+                    'Father Name': s.fatherName,
+                    'Age': s.age,
+                    'Department': s.department,
+                    'Class/Section': s.studentClass || 'N/A',
+                    'Entry Date': s.entryDate
+                }));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(currentStudentsData), 'Current Students');
+            }
+            
+            // Exited Students Sheet
+            if (exits.length > 0) {
+                const sortedExits = [...exits].sort((a,b) => new Date(b.exitDate) - new Date(a.exitDate));
+                const exitedStudentsData = sortedExits.map(e => ({
+                    'Roll Number': e.rollNumber,
+                    'Student Name': e.studentName,
+                    'Father Name': e.fatherName,
+                    'Age': e.age,
+                    'Department': e.department,
+                    'Entry Date': e.entryDate,
+                    'Exit Date': e.exitDate,
+                    'Duration': e.duration,
+                    'Reason for Exit': e.reason
+                }));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exitedStudentsData), 'Exited Students');
+            }
+            
+            // Department Wise Sheet
+            if (students.length > 0) {
+                const departmentGroups = {};
+                students.forEach(s => {
+                    if (!departmentGroups[s.department]) {
+                        departmentGroups[s.department] = [];
+                    }
+                    departmentGroups[s.department].push(s);
+                });
+                
+                const departmentData = [];
+                Object.keys(departmentGroups).forEach(dept => {
+                    departmentData.push([`Department: ${dept}`]);
+                    departmentData.push(['Roll No', 'Name', 'Father Name', 'Age', 'Class', 'Entry Date']);
+                    departmentGroups[dept].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber))
+                        .forEach(s => {
+                            departmentData.push([
+                                s.rollNumber,
+                                s.fullName,
+                                s.fatherName,
+                                s.age,
+                                s.studentClass || 'N/A',
+                                s.entryDate
+                            ]);
+                        });
+                    departmentData.push([]);
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(departmentData), 'Department Wise');
+            }
+            
+            // Class Wise Sheet
+            if (students.length > 0) {
+                const classGroups = {};
+                students.forEach(s => {
+                    const cls = s.studentClass || 'Not Assigned';
+                    if (!classGroups[cls]) {
+                        classGroups[cls] = [];
+                    }
+                    classGroups[cls].push(s);
+                });
+                
+                const classData = [];
+                Object.keys(classGroups).forEach(cls => {
+                    classData.push([`Class: ${cls}`]);
+                    classData.push(['Roll No', 'Name', 'Father Name', 'Age', 'Department', 'Entry Date']);
+                    classGroups[cls].sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber))
+                        .forEach(s => {
+                            classData.push([
+                                s.rollNumber,
+                                s.fullName,
+                                s.fatherName,
+                                s.age,
+                                s.department,
+                                s.entryDate
+                            ]);
+                        });
+                    classData.push([]);
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(classData), 'Class Wise');
+            }
+            
+            // Summary Sheet
+            const summaryData = [
+                ['Madrasa Management System - Complete Report'],
+                ['Generated on:', today],
+                ['Generated by:', currentUser.email],
+                [],
+                ['STATISTICS SUMMARY'],
+                ['Total Students (All Time):', students.length + exits.length],
+                ['Current Students:', students.length],
+                ['Exited Students:', exits.length],
+                [],
+                ['DEPARTMENT WISE COUNT (Current Students):']
+            ];
+            
+            // Department counts
+            if (students.length > 0) {
+                const deptCounts = {};
+                students.forEach(s => {
+                    deptCounts[s.department] = (deptCounts[s.department] || 0) + 1;
+                });
+                
+                summaryData.push(['Department', 'Count']);
+                Object.keys(deptCounts).forEach(dept => {
+                    summaryData.push([dept, deptCounts[dept]]);
+                });
+            }
+            
+            summaryData.push([]);
+            summaryData.push(['Roll Number Range:', students.length > 0 ? 
+                `${Math.min(...students.map(s => parseInt(s.rollNumber)))} to ${Math.max(...students.map(s => parseInt(s.rollNumber)))}` : 
+                'No students']);
+            summaryData.push(['Last Updated:', new Date().toLocaleString()]);
+            
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), 'Summary');
+            
+            const fileName = `Madrasa_Report_${currentUser.email.split('@')[0]}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showMessage("Excel report exported with 5 separate sheets!", "success");
+        }
+
+        function saveToFirebase(newStudents, newExits, msg) {
+            const btn = document.getElementById('saveBtn');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<div class="loading"></div> Saving...';
+            btn.disabled = true;
+            
+            // Use user-specific path in Firebase
+            const userPath = `users/${currentUser.uid}/madrasaData`;
+            
+            const studentsObj = {};
+            newStudents.forEach(s => { studentsObj[s.id] = s; });
+            
+            const exitsObj = {};
+            newExits.forEach(e => { exitsObj[e.id] = e; });
+            
+            database.ref(userPath).set({
+                students: studentsObj,
+                exits: exitsObj,
+                lastUpdated: Date.now(),
+                userEmail: currentUser.email
+            })
+            .then(() => {
+                students = newStudents;
+                exits = newExits;
+                updateStats();
+                renderStudents();
+                renderExitHistory();
+                showMessage(msg, "success");
+                btn.innerHTML = original;
+                btn.disabled = false;
+            })
+            .catch(error => {
+                console.error("Firebase save error:", error);
+                showMessage("Save failed: " + error.message, "error");
+                btn.innerHTML = original;
+                btn.disabled = false;
+            });
+        }
+
+        function loadData() {
+            if (!currentUser) return;
+            
+            const userPath = `users/${currentUser.uid}/madrasaData`;
+            
+            database.ref(userPath).once('value')
+            .then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    students = data.students ? Object.values(data.students) : [];
+                    exits = data.exits ? Object.values(data.exits) : [];
+                    students.sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
+                    updateStats();
+                    renderStudents();
+                    renderExitHistory();
+                    showMessage(`Data loaded: ${students.length} current students, ${exits.length} exited`, "success");
+                } else {
+                    showMessage("Welcome! No data found. Start by adding students.", "info");
+                }
+            })
+            .catch(error => {
+                console.error("Firebase load error:", error);
+                showMessage("Failed to load data", "error");
+            });
+        }
+
+        // Message functions
+        function showLoginMessage(message, type = 'info') {
+            loginNotification.textContent = message;
+            loginNotification.className = 'notification ' + type;
+            loginNotification.style.display = 'block';
+            
+            setTimeout(() => {
+                loginNotification.style.display = 'none';
+            }, 4000);
+        }
+
+        function showMessage(message, type = "success") {
+            sysNotification.textContent = message;
+            sysNotification.className = "sys-notification " + type;
+            sysNotification.style.display = "block";
+            setTimeout(() => { sysNotification.style.display = "none"; }, 3000);
+        }
+
+        // Make functions available globally
+        window.editStudent = editStudent;
+        window.deleteStudent = deleteStudent;
+        window.deleteExitRecord = deleteExitRecord;
+        window.markForExit = markForExit;
+    </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
