@@ -1,0 +1,8 @@
+firebase-config.js
+.env
+config.json
+secrets.json
+*.env
+*.secret
+api-keys.js
+firebase-keys.js

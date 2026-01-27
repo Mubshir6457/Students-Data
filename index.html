@@ -14,6 +14,9 @@
     <!-- Excel Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
+    <!-- Firebase Configuration (Loaded from external file) -->
+    <script src="firebase-config.js"></script>
+    
     <style>
         :root {
             --primary: #1a237e; --primary-light: #534bae; --secondary: #3949ab;
@@ -386,92 +389,96 @@
     </div>
 
     <script>
-      
-        const firebaseConfig = (() => {
-           
-            if (window.__FIREBASE_CONFIG__) {
-                return window.__FIREBASE_CONFIG__;
-            }
-            
-           
-            const storedConfig = localStorage.getItem('firebase_config_encrypted');
-            if (storedConfig) {
-                try {
-                 
-                    const decoded = atob(storedConfig);
-                    return JSON.parse(decoded);
-                } catch(e) {
-                    console.error("Failed to load stored config");
-                }
-            }
-            
-            
-            return null; 
-        })();
-
-     
-        async function loadFirebaseConfig() {
-            try {
-               
-                const response = await fetch('/config.json');
-                if (response.ok) {
-                    const config = await response.json();
-                    return config;
-                }
-            } catch(e) {
-                console.warn("Could not load config.json");
-            }
-            
-            
-            if (typeof __ENV__ !== 'undefined' && __ENV__.FIREBASE_API_KEY) {
-                return {
-                    apiKey: __ENV__.FIREBASE_API_KEY,
-                    authDomain: __ENV__.FIREBASE_AUTH_DOMAIN,
-                    databaseURL: __ENV__.FIREBASE_DATABASE_URL,
-                    projectId: __ENV__.FIREBASE_PROJECT_ID,
-                    storageBucket: __ENV__.FIREBASE_STORAGE_BUCKET,
-                    messagingSenderId: __ENV__.FIREBASE_MESSAGING_SENDER_ID,
-                    appId: __ENV__.FIREBASE_APP_ID
-                };
-            }
-            
-          
-            console.warn("Using hardcoded Firebase config - Not secure for production!");
-        }
-
-        // Initialize Firebase after loading config
-        let database, auth;
+        // ==============================================
+        // FIREBASE INITIALIZATION
+        // ==============================================
+        let database = null;
+        let auth = null;
         
-        async function initializeFirebase() {
-            const config = await loadFirebaseConfig();
-            
-            // Validate config
-            if (!config || !config.apiKey || config.apiKey === "YOUR_API_KEY_FROM_ENV") {
-                showLoginMessage("Firebase configuration missing. Please contact administrator.", "error");
+        // Firebase configuration is loaded from firebase-config.js
+        // If firebaseConfig is not available, show configuration setup
+        function initializeFirebase() {
+            try {
+                if (typeof firebaseConfig === 'undefined' || !firebaseConfig.apiKey) {
+                    // If config is not available in firebase-config.js
+                    showConfigSetup();
+                    return false;
+                }
+                
+                // Initialize Firebase with the configuration from firebase-config.js
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                auth = firebase.auth();
+                
+                // Store config in localStorage for future use
+                localStorage.setItem('firebase_config', JSON.stringify(firebaseConfig));
+                
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                showLoginMessage('Failed to initialize system. Please contact administrator.', 'error');
                 return false;
             }
-            
-            // Initialize Firebase
-            firebase.initializeApp(config);
-            database = firebase.database();
-            auth = firebase.auth();
-            
-            // Store encrypted config in localStorage for future use
-            try {
-                const encrypted = btoa(JSON.stringify(config));
-                localStorage.setItem('firebase_config_encrypted', encrypted);
-            } catch(e) {
-                console.error("Failed to store config");
-            }
-            
-            return true;
         }
 
-        // Global variables
+        // Configuration setup UI
+        function showConfigSetup() {
+            const setupHTML = `
+                <div style="padding: 30px; background: white; border-radius: 15px; max-width: 500px; margin: 0 auto; box-shadow: var(--shadow);">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <i class="fas fa-cog" style="font-size: 48px; color: var(--primary); margin-bottom: 15px;"></i>
+                        <h2 style="color: var(--primary); margin-bottom: 10px;">Configuration Required</h2>
+                        <p style="color: #666; margin-bottom: 20px;">This application requires Firebase configuration.</p>
+                    </div>
+                    
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--warning);">
+                        <p style="color: var(--warning); font-size: 14px; margin: 0;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Important:</strong> Firebase configuration file (firebase-config.js) is missing.
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 16px;">
+                            <i class="fas fa-info-circle"></i> How to configure:
+                        </h3>
+                        
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <ol style="color: #333; margin: 0; padding-left: 20px; font-size: 14px;">
+                                <li style="margin-bottom: 8px;">Create a file named <strong>firebase-config.js</strong></li>
+                                <li style="margin-bottom: 8px;">Add your Firebase configuration to that file</li>
+                                <li style="margin-bottom: 8px;">Place it in the same folder as index.html</li>
+                                <li>Refresh this page</li>
+                            </ol>
+                        </div>
+                        
+                        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <p style="color: #e65100; font-size: 13px; margin: 0;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <strong>Note:</strong> For security, firebase-config.js should NOT be uploaded to GitHub.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-system btn-primary" id="refreshPage" style="margin-top: 25px;">
+                        <i class="fas fa-redo"></i> Refresh Page
+                    </button>
+                </div>
+            `;
+            
+            document.querySelector('.login-container').innerHTML = setupHTML;
+            
+            document.getElementById('refreshPage').addEventListener('click', function() {
+                location.reload();
+            });
+        }
+
+        // ==============================================
+        // APPLICATION CODE
+        // ==============================================
         let students = [], exits = [], editStudentId = null, studentToExit = null;
         let currentUser = null;
 
-        // DOM Elements
         const loginPage = document.getElementById('loginPage');
         const mainSystem = document.getElementById('mainSystem');
         const loginNotification = document.getElementById('notification');
@@ -479,155 +486,143 @@
         const userNameElement = document.getElementById('userName');
         const logoutBtn = document.getElementById('logoutBtn');
         
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Initialize Firebase first
-            const firebaseInitialized = await initializeFirebase();
-            if (!firebaseInitialized) {
-                showLoginMessage("Failed to initialize system. Please refresh.", "error");
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            const firebaseInitialized = initializeFirebase();
             
-            setupLoginEvents();
-            setupMainSystemEvents();
-            checkAuthState();
+            if (firebaseInitialized) {
+                setupLoginEvents();
+                setupMainSystemEvents();
+                checkAuthState();
+            }
         });
 
-        // Check authentication state
         function checkAuthState() {
             auth.onAuthStateChanged((user) => {
                 if (user) {
-                    // User is logged in
                     currentUser = user;
                     showMainSystem(user);
                     loadData();
                 } else {
-                    // User is not logged in
                     showLoginPage();
                 }
             });
         }
 
-        // Show login page
         function showLoginPage() {
             loginPage.style.display = 'flex';
             mainSystem.style.display = 'none';
             
-            // Auto-focus email field
             setTimeout(() => {
-                document.getElementById('loginEmail').focus();
+                const emailInput = document.getElementById('loginEmail');
+                if (emailInput) emailInput.focus();
             }, 100);
         }
 
-        // Show main system
         function showMainSystem(user) {
             loginPage.style.display = 'none';
             mainSystem.style.display = 'block';
             
-            // Set user info
             userNameElement.textContent = user.email || 'User';
             
-            // Store user info in localStorage
             localStorage.setItem('madrasaUser', JSON.stringify({
                 uid: user.uid,
                 email: user.email,
                 lastLogin: new Date().toISOString()
             }));
             
-            // Set today's date
             setTodayDates();
         }
 
-        // Setup login page events
         function setupLoginEvents() {
-            // Password toggle functionality
-            document.getElementById('toggleLoginPassword').addEventListener('click', function() {
-                const passwordInput = document.getElementById('loginPassword');
-                const icon = this.querySelector('i');
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    passwordInput.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
+            const toggleBtn = document.getElementById('toggleLoginPassword');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const passwordInput = document.getElementById('loginPassword');
+                    const icon = this.querySelector('i');
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
             
-            // Handle Login
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-                
-                if (!email || !password) {
-                    showLoginMessage('Please fill in all fields', 'error');
-                    return;
-                }
-                
-                const loginBtn = document.getElementById('loginBtn');
-                const originalText = loginBtn.innerHTML;
-                loginBtn.innerHTML = '<div class="loading"></div> Authenticating...';
-                loginBtn.disabled = true;
-                
-                // Firebase login
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        // Login successful
-                        showLoginMessage('Login successful! Loading system...', 'success');
-                        
-                        currentUser = userCredential.user;
-                        setTimeout(() => {
-                            showMainSystem(currentUser);
-                            loadData();
-                        }, 1000);
-                    })
-                    .catch((error) => {
-                        console.error('Login error:', error);
-                        
-                        let errorMessage = 'Login failed. ';
-                        switch (error.code) {
-                            case 'auth/user-not-found':
-                                errorMessage += 'No account found with this email.';
-                                break;
-                            case 'auth/wrong-password':
-                                errorMessage += 'Incorrect password.';
-                                break;
-                            case 'auth/invalid-email':
-                                errorMessage += 'Invalid email format.';
-                                break;
-                            case 'auth/user-disabled':
-                                errorMessage += 'This account has been disabled.';
-                                break;
-                            default:
-                                errorMessage += error.message;
-                        }
-                        
-                        showLoginMessage(errorMessage, 'error');
-                        loginBtn.innerHTML = originalText;
-                        loginBtn.disabled = false;
-                    });
-            });
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (!email || !password) {
+                        showLoginMessage('Please fill in all fields', 'error');
+                        return;
+                    }
+                    
+                    const loginBtn = document.getElementById('loginBtn');
+                    const originalText = loginBtn.innerHTML;
+                    loginBtn.innerHTML = '<div class="loading"></div> Authenticating...';
+                    loginBtn.disabled = true;
+                    
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            showLoginMessage('Login successful! Loading system...', 'success');
+                            
+                            currentUser = userCredential.user;
+                            setTimeout(() => {
+                                showMainSystem(currentUser);
+                                loadData();
+                            }, 1000);
+                        })
+                        .catch((error) => {
+                            console.error('Login error:', error);
+                            
+                            let errorMessage = 'Login failed. ';
+                            switch (error.code) {
+                                case 'auth/user-not-found':
+                                    errorMessage += 'No account found with this email.';
+                                    break;
+                                case 'auth/wrong-password':
+                                    errorMessage += 'Incorrect password.';
+                                    break;
+                                case 'auth/invalid-email':
+                                    errorMessage += 'Invalid email format.';
+                                    break;
+                                case 'auth/user-disabled':
+                                    errorMessage += 'This account has been disabled.';
+                                    break;
+                                default:
+                                    errorMessage += error.message;
+                            }
+                            
+                            showLoginMessage(errorMessage, 'error');
+                            loginBtn.innerHTML = originalText;
+                            loginBtn.disabled = false;
+                        });
+                });
+            }
         }
 
-        // Setup main system events
         function setupMainSystemEvents() {
-            // Logout functionality
-            logoutBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to logout?')) {
-                    auth.signOut().then(() => {
-                        localStorage.removeItem('madrasaUser');
-                        currentUser = null;
-                        showLoginPage();
-                    }).catch((error) => {
-                        showMessage("Logout error: " + error.message, "error");
-                    });
-                }
-            });
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        auth.signOut().then(() => {
+                            localStorage.removeItem('madrasaUser');
+                            currentUser = null;
+                            showLoginPage();
+                        }).catch((error) => {
+                            showMessage("Logout error: " + error.message, "error");
+                        });
+                    }
+                });
+            }
 
-            // Tab switching
             document.querySelectorAll('.tab-btn').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabId = this.getAttribute('data-tab');
@@ -640,36 +635,63 @@
                 });
             });
 
-            // Student form
-            document.getElementById('studentForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveStudent();
-            });
+            const studentForm = document.getElementById('studentForm');
+            if (studentForm) {
+                studentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveStudent();
+                });
+            }
 
-            // Exit form
-            document.getElementById('exitForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                prepareExit();
-            });
+            const exitForm = document.getElementById('exitForm');
+            if (exitForm) {
+                exitForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    prepareExit();
+                });
+            }
 
-            // Other event listeners
-            document.getElementById('exitRollNumber').addEventListener('input', updateExitDuration);
-            document.getElementById('exportReport').addEventListener('click', exportReport);
-            document.getElementById('confirmExit').addEventListener('click', confirmExit);
-            document.getElementById('cancelExit').addEventListener('click', () => document.getElementById('exitModal').style.display = 'none');
-            document.getElementById('exitModal').addEventListener('click', function(e) {
-                if (e.target === this) this.style.display = 'none';
-            });
+            const exitRollInput = document.getElementById('exitRollNumber');
+            if (exitRollInput) {
+                exitRollInput.addEventListener('input', updateExitDuration);
+            }
             
-            // Set today's dates
+            const exportBtn = document.getElementById('exportReport');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportReport);
+            }
+            
+            const confirmExitBtn = document.getElementById('confirmExit');
+            if (confirmExitBtn) {
+                confirmExitBtn.addEventListener('click', confirmExit);
+            }
+            
+            const cancelExitBtn = document.getElementById('cancelExit');
+            if (cancelExitBtn) {
+                cancelExitBtn.addEventListener('click', () => {
+                    const exitModal = document.getElementById('exitModal');
+                    if (exitModal) exitModal.style.display = 'none';
+                });
+            }
+            
+            const exitModal = document.getElementById('exitModal');
+            if (exitModal) {
+                exitModal.addEventListener('click', function(e) {
+                    if (e.target === this) this.style.display = 'none';
+                });
+            }
+            
             setTodayDates();
         }
 
         // Main system functions
         function setTodayDates() {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('entryDate').value = today;
-            document.getElementById('exitDate').value = today;
+            const entryDate = document.getElementById('entryDate');
+            const exitDate = document.getElementById('exitDate');
+            
+            if (entryDate) entryDate.value = today;
+            if (exitDate) exitDate.value = today;
         }
 
         function getNextRoll() {
@@ -677,7 +699,6 @@
             const rolls = students.map(s => parseInt(s.rollNumber)).filter(r => !isNaN(r));
             if (rolls.length === 0) return "0";
             
-            // Find the lowest missing roll number starting from 0
             for (let i = 0; i <= Math.max(...rolls) + 1; i++) {
                 if (!rolls.includes(i)) return i.toString();
             }
@@ -695,7 +716,6 @@
             if (!fatherName) { showMessage("Please enter father name", "error"); return; }
             if (!Startfrom) { showMessage("Please select Startfrom", "error"); return; }
             
-            // If roll is empty, auto-assign
             if (roll === '') {
                 roll = getNextRoll();
                 showMessage(`Auto-assigned roll: ${roll}`, "info");
@@ -707,7 +727,6 @@
                 return; 
             }
             
-            // Check if roll already exists (only for new students)
             if (!id) {
                 if (students.some(s => s.rollNumber === roll)) { 
                     showMessage(`Roll ${roll} already exists. Please use another roll.`, "error"); 
@@ -738,7 +757,6 @@
                 newStudents.push(student);
             }
             
-            // Sort by roll number
             newStudents.sort((a,b) => parseInt(a.rollNumber) - parseInt(b.rollNumber));
             saveToFirebase(newStudents, exits, "Student saved successfully!");
             document.getElementById('studentForm').reset();
@@ -1092,7 +1110,6 @@
             btn.innerHTML = '<div class="loading"></div> Saving...';
             btn.disabled = true;
             
-            // Use user-specific path in Firebase
             const userPath = `users/${currentUser.uid}/madrasaData`;
             
             const studentsObj = {};
@@ -1153,20 +1170,28 @@
 
         // Message functions
         function showLoginMessage(message, type = 'info') {
-            loginNotification.textContent = message;
-            loginNotification.className = 'notification ' + type;
-            loginNotification.style.display = 'block';
-            
-            setTimeout(() => {
-                loginNotification.style.display = 'none';
-            }, 4000);
+            if (loginNotification) {
+                loginNotification.textContent = message;
+                loginNotification.className = 'notification ' + type;
+                loginNotification.style.display = 'block';
+                
+                setTimeout(() => {
+                    loginNotification.style.display = 'none';
+                }, 4000);
+            } else {
+                alert(message);
+            }
         }
 
         function showMessage(message, type = "success") {
-            sysNotification.textContent = message;
-            sysNotification.className = "sys-notification " + type;
-            sysNotification.style.display = "block";
-            setTimeout(() => { sysNotification.style.display = "none"; }, 3000);
+            if (sysNotification) {
+                sysNotification.textContent = message;
+                sysNotification.className = "sys-notification " + type;
+                sysNotification.style.display = "block";
+                setTimeout(() => { sysNotification.style.display = "none"; }, 3000);
+            } else {
+                alert(message);
+            }
         }
 
         // Make functions available globally
