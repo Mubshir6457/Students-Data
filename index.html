@@ -387,56 +387,150 @@
 
     <script>
         // ==============================================
-        // ENVIRONMENT VARIABLES LOADER
+        // UNIVERSAL FIREBASE CONFIG LOADER
+        // Works for Local (.env) AND Vercel (Environment Variables)
         // ==============================================
-        window.env = {};
+        window.firebaseConfig = {};
         
-        async function loadEnvVariables() {
+        async function loadFirebaseConfig() {
             try {
-                // Try to load .env file
-                const response = await fetch('.env');
-                if (!response.ok) throw new Error('.env file not found');
+                // FIRST: Try to load from Vercel Environment Variables
+                // This works when deployed on Vercel
+                if (window.location.hostname.includes('vercel.app')) {
+                    console.log('Vercel environment detected');
+                    
+                    // Try to read from Vercel's environment
+                    const vercelConfig = await loadVercelConfig();
+                    if (vercelConfig && vercelConfig.apiKey) {
+                        window.firebaseConfig = vercelConfig;
+                        console.log('Loaded from Vercel environment');
+                        return true;
+                    }
+                }
                 
-                const text = await response.text();
-                const lines = text.split('\n');
-                
-                lines.forEach(line => {
-                    const trimmed = line.trim();
-                    if (trimmed && !trimmed.startsWith('#')) {
-                        const [key, ...valueParts] = trimmed.split('=');
-                        if (key && valueParts.length > 0) {
-                            const value = valueParts.join('=').trim();
-                            window.env[key.trim()] = value;
+                // SECOND: Try to load from .env file (local development)
+                try {
+                    const response = await fetch('.env');
+                    if (response.ok) {
+                        const text = await response.text();
+                        const lines = text.split('\n');
+                        const env = {};
+                        
+                        lines.forEach(line => {
+                            const trimmed = line.trim();
+                            if (trimmed && !trimmed.startsWith('#')) {
+                                const [key, ...valueParts] = trimmed.split('=');
+                                if (key && valueParts.length > 0) {
+                                    const value = valueParts.join('=').trim();
+                                    env[key.trim()] = value;
+                                }
+                            }
+                        });
+                        
+                        if (env.FIREBASE_API_KEY && env.FIREBASE_API_KEY !== 'YOUR_API_KEY_HERE') {
+                            window.firebaseConfig = {
+                                apiKey: env.FIREBASE_API_KEY,
+                                authDomain: env.FIREBASE_AUTH_DOMAIN,
+                                databaseURL: env.FIREBASE_DATABASE_URL,
+                                projectId: env.FIREBASE_PROJECT_ID,
+                                storageBucket: env.FIREBASE_STORAGE_BUCKET,
+                                messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID,
+                                appId: env.FIREBASE_APP_ID,
+                                measurementId: env.FIREBASE_MEASUREMENT_ID || ''
+                            };
+                            console.log('Loaded from .env file');
+                            return true;
                         }
                     }
-                });
+                } catch (envError) {
+                    console.log('.env file not found or error:', envError.message);
+                }
                 
-                console.log('Environment variables loaded from .env file');
-                return true;
-            } catch (error) {
-                console.warn('Could not load .env file:', error.message);
-                
-                // Try to load from localStorage
+                // THIRD: Try to load from localStorage (previously saved config)
                 const savedConfig = localStorage.getItem('madrasa_firebase_config');
                 if (savedConfig) {
                     try {
                         const config = JSON.parse(savedConfig);
-                        window.env.FIREBASE_API_KEY = config.apiKey;
-                        window.env.FIREBASE_AUTH_DOMAIN = config.authDomain;
-                        window.env.FIREBASE_DATABASE_URL = config.databaseURL;
-                        window.env.FIREBASE_PROJECT_ID = config.projectId;
-                        window.env.FIREBASE_STORAGE_BUCKET = config.storageBucket;
-                        window.env.FIREBASE_MESSAGING_SENDER_ID = config.messagingSenderId;
-                        window.env.FIREBASE_APP_ID = config.appId;
-                        console.log('Environment variables loaded from localStorage');
-                        return true;
+                        if (config.apiKey && config.apiKey !== 'YOUR_API_KEY_HERE') {
+                            window.firebaseConfig = config;
+                            console.log('Loaded from localStorage');
+                            return true;
+                        }
                     } catch (e) {
                         console.error('Failed to parse saved config:', e);
                     }
                 }
                 
+                // FOURTH: Try embedded config (for GitHub Pages or static hosting)
+               
+                
+                // Check if embedded config is valid (not dummy values)
+                if (embeddedConfig.apiKey && !embeddedConfig.apiKey.includes('YOUR_API_KEY')) {
+                    window.firebaseConfig = embeddedConfig;
+                    console.log('Loaded from embedded config');
+                    return true;
+                }
+                
+                console.log('No valid Firebase configuration found');
+                return false;
+                
+            } catch (error) {
+                console.error('Error loading Firebase config:', error);
                 return false;
             }
+        }
+        
+        async function loadVercelConfig() {
+            // This function tries to load config from Vercel environment
+            // In Vercel, environment variables are available at build time
+            // We'll check if they're injected into the window object
+            
+            // Method 1: Check if Vercel injected environment variables
+            if (window.process && window.process.env) {
+                const env = window.process.env;
+                if (env.FIREBASE_API_KEY) {
+                    return {
+                        apiKey: env.FIREBASE_API_KEY,
+                        authDomain: env.FIREBASE_AUTH_DOMAIN,
+                        databaseURL: env.FIREBASE_DATABASE_URL,
+                        projectId: env.FIREBASE_PROJECT_ID,
+                        storageBucket: env.FIREBASE_STORAGE_BUCKET,
+                        messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID,
+                        appId: env.FIREBASE_APP_ID,
+                        measurementId: env.FIREBASE_MEASUREMENT_ID || ''
+                    };
+                }
+            }
+            
+            // Method 2: Check for Vercel's __NEXT_DATA__ or similar
+            if (window.__NEXT_DATA__ && window.__NEXT_DATA__.env) {
+                const env = window.__NEXT_DATA__.env;
+                if (env.FIREBASE_API_KEY) {
+                    return {
+                        apiKey: env.FIREBASE_API_KEY,
+                        authDomain: env.FIREBASE_AUTH_DOMAIN,
+                        databaseURL: env.FIREBASE_DATABASE_URL,
+                        projectId: env.FIREBASE_PROJECT_ID,
+                        storageBucket: env.FIREBASE_STORAGE_BUCKET,
+                        messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID,
+                        appId: env.FIREBASE_APP_ID,
+                        measurementId: env.FIREBASE_MEASUREMENT_ID || ''
+                    };
+                }
+            }
+            
+            // Method 3: Try to fetch from /api/config if you set up an API route
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    if (config.apiKey) return config;
+                }
+            } catch (apiError) {
+                console.log('API config route not available:', apiError.message);
+            }
+            
+            return null;
         }
 
         // ==============================================
@@ -447,102 +541,83 @@
         
         async function initializeFirebase() {
             try {
-                // First try to load environment variables
-                const envLoaded = await loadEnvVariables();
+                // Load Firebase configuration
+                const configLoaded = await loadFirebaseConfig();
                 
-                if (!envLoaded || !window.env.FIREBASE_API_KEY || window.env.FIREBASE_API_KEY === 'YOUR_API_KEY_HERE') {
+                if (!configLoaded || !window.firebaseConfig.apiKey) {
                     showConfigSetup();
                     return false;
                 }
                 
-                // Create Firebase config from environment variables
-                const firebaseConfig = {
-                    apiKey: window.env.FIREBASE_API_KEY,
-                    authDomain: window.env.FIREBASE_AUTH_DOMAIN,
-                    databaseURL: window.env.FIREBASE_DATABASE_URL,
-                    projectId: window.env.FIREBASE_PROJECT_ID,
-                    storageBucket: window.env.FIREBASE_STORAGE_BUCKET,
-                    messagingSenderId: window.env.FIREBASE_MESSAGING_SENDER_ID,
-                    appId: window.env.FIREBASE_APP_ID
-                };
+                // Validate config
+                if (window.firebaseConfig.apiKey.includes('YOUR_API_KEY')) {
+                    showConfigSetup();
+                    return false;
+                }
                 
                 // Initialize Firebase
-                firebase.initializeApp(firebaseConfig);
+                firebase.initializeApp(window.firebaseConfig);
                 database = firebase.database();
                 auth = firebase.auth();
                 
                 // Store config in localStorage for future use
-                localStorage.setItem('madrasa_firebase_config', JSON.stringify(firebaseConfig));
-                localStorage.setItem('firebase_config', JSON.stringify(firebaseConfig));
+                localStorage.setItem('madrasa_firebase_config', JSON.stringify(window.firebaseConfig));
+                localStorage.setItem('firebase_config', JSON.stringify(window.firebaseConfig));
                 
-                console.log('Firebase initialized successfully');
+                console.log('Firebase initialized successfully with config:', window.firebaseConfig.projectId);
                 return true;
+                
             } catch (error) {
                 console.error('Firebase initialization error:', error);
-                showLoginMessage('Failed to initialize system. Please check your .env file configuration.', 'error');
+                showLoginMessage('Failed to initialize Firebase. Please check configuration.', 'error');
                 return false;
             }
         }
 
-        // Configuration setup UI
+        // Configuration setup UI - Only shows if NO config is found
         function showConfigSetup() {
             const setupHTML = `
                 <div style="padding: 30px; background: white; border-radius: 15px; max-width: 500px; margin: 0 auto; box-shadow: var(--shadow);">
                     <div style="text-align: center; margin-bottom: 25px;">
                         <i class="fas fa-cog" style="font-size: 48px; color: var(--primary); margin-bottom: 15px;"></i>
-                        <h2 style="color: var(--primary); margin-bottom: 10px;">Configuration Required</h2>
-                        <p style="color: #666; margin-bottom: 20px;">Please configure your Firebase settings.</p>
+                        <h2 style="color: var(--primary); margin-bottom: 10px;">Firebase Configuration Required</h2>
+                        <p style="color: #666; margin-bottom: 20px;">This app needs Firebase configuration to work.</p>
                     </div>
                     
                     <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--warning);">
                         <p style="color: var(--warning); font-size: 14px; margin: 0;">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Important:</strong> Create a <strong>.env</strong> file in the same folder as index.html
+                            <strong>Setup Options:</strong> Choose how to configure Firebase
                         </p>
                     </div>
                     
                     <div style="margin-top: 20px;">
-                        <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 16px;">
-                            <i class="fas fa-info-circle"></i> How to configure:
-                        </h3>
-                        
-                        <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                            <ol style="color: #333; margin: 0; padding-left: 20px; font-size: 14px;">
-                                <li style="margin-bottom: 8px;">Create a file named <strong>.env</strong></li>
-                                <li style="margin-bottom: 8px;">Add your Firebase configuration (see example below)</li>
-                                <li style="margin-bottom: 8px;">Place it in the same folder as index.html</li>
-                                <li>Refresh this page</li>
-                            </ol>
-                        </div>
-                        
                         <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 12px;">
-                            <p style="color: #2e7d32; margin: 0 0 10px 0;"><strong>.env file example:</strong></p>
+                            <p style="color: #2e7d32; margin: 0 0 10px 0;"><strong>For Local Development (.env file):</strong></p>
                             <div style="color: #333;">
-                                <div>FIREBASE_API_KEY=AIzaSyABC123XYZ456</div>
-                                <div>FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com</div>
-                                <div>FIREBASE_DATABASE_URL=https://your-project.firebaseio.com</div>
-                                <div>FIREBASE_PROJECT_ID=your-project-id</div>
-                                <div>FIREBASE_STORAGE_BUCKET=your-project.appspot.com</div>
-                                <div>FIREBASE_MESSAGING_SENDER_ID=1234567890</div>
-                                <div>FIREBASE_APP_ID=1:1234567890:web:abcdef123456</div>
-                            </div>
+                               
                         </div>
                         
-                        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                            <p style="color: #e65100; font-size: 13px; margin: 0;">
-                                <i class="fas fa-exclamation-circle"></i>
-                                <strong>Note:</strong> For security, .env file should NOT be uploaded to GitHub.
-                                Add it to .gitignore file.
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <p style="color: #1976d2; font-size: 14px; margin: 0 0 10px 0;">
+                                <i class="fas fa-cloud"></i>
+                                <strong>For Vercel Deployment:</strong>
                             </p>
+                            <ol style="color: #333; margin: 0; padding-left: 20px; font-size: 13px;">
+                                <li style="margin-bottom: 8px;">Go to Vercel Project Dashboard</li>
+                                <li style="margin-bottom: 8px;">Settings → Environment Variables</li>
+                                <li style="margin-bottom: 8px;">Add all the Firebase variables from above</li>
+                                <li>Redeploy the project</li>
+                            </ol>
                         </div>
                     </div>
                     
                     <div style="margin-top: 25px; display: flex; gap: 10px;">
                         <button class="btn-system btn-primary" id="refreshPage" style="flex: 1;">
-                            <i class="fas fa-redo"></i> Refresh Page
+                            <i class="fas fa-redo"></i> Check Again
                         </button>
                         <button class="btn-system btn-info" id="manualConfig" style="flex: 1;">
-                            <i class="fas fa-keyboard"></i> Manual Setup
+                            <i class="fas fa-keyboard"></i> Enter Manually
                         </button>
                     </div>
                 </div>
@@ -562,54 +637,54 @@
                 <div style="padding: 30px; background: white; border-radius: 15px; max-width: 500px; margin: 0 auto; box-shadow: var(--shadow);">
                     <div style="text-align: center; margin-bottom: 25px;">
                         <i class="fas fa-key" style="font-size: 48px; color: var(--primary); margin-bottom: 15px;"></i>
-                        <h2 style="color: var(--primary); margin-bottom: 10px;">Manual Firebase Setup</h2>
-                        <p style="color: #666; margin-bottom: 20px;">Enter your Firebase configuration:</p>
+                        <h2 style="color: var(--primary); margin-bottom: 10px;">Enter Firebase Configuration</h2>
+                        <p style="color: #666; margin-bottom: 20px;">Copy from Firebase Console → Project Settings</p>
                     </div>
                     
                     <form id="manualConfigForm">
                         <div class="form-group">
                             <label class="form-label">API Key</label>
-                            <input type="text" class="form-input" id="configApiKey" required placeholder="AIzaSyABC123XYZ456">
+                            <input type="text" class="form-input" id="configApiKey" required 
+                                   value="AIzaSyD-nEluewFdw3LLyU1biNEZ1cKpFLKN7kg">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Auth Domain</label>
-                            <input type="text" class="form-input" id="configAuthDomain" required placeholder="your-project.firebaseapp.com">
+                            <input type="text" class="form-input" id="configAuthDomain" required 
+                                   value="allstudentdata-e1a01.firebaseapp.com">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Database URL</label>
-                            <input type="text" class="form-input" id="configDatabaseURL" required placeholder="https://your-project.firebaseio.com">
+                            <input type="text" class="form-input" id="configDatabaseURL" required 
+                                   value="https://allstudentdata-e1a01-default-rtdb.firebaseio.com">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Project ID</label>
-                            <input type="text" class="form-input" id="configProjectId" required placeholder="your-project-id">
+                            <input type="text" class="form-input" id="configProjectId" required 
+                                   value="allstudentdata-e1a01">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Storage Bucket</label>
-                            <input type="text" class="form-input" id="configStorageBucket" required placeholder="your-project.appspot.com">
+                            <input type="text" class="form-input" id="configStorageBucket" required 
+                                   value="allstudentdata-e1a01.firebasestorage.app">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Messaging Sender ID</label>
-                            <input type="text" class="form-input" id="configMessagingSenderId" required placeholder="1234567890">
+                            <input type="text" class="form-input" id="configMessagingSenderId" required 
+                                   value="894758025587">
                         </div>
                         <div class="form-group">
                             <label class="form-label">App ID</label>
-                            <input type="text" class="form-input" id="configAppId" required placeholder="1:1234567890:web:abcdef123456">
+                            <input type="text" class="form-input" id="configAppId" required 
+                                   value="1:894758025587:web:187dd0f807910e5e04ad06">
                         </div>
                         
                         <button type="submit" class="btn-system btn-primary" style="margin-top: 20px;">
-                            <i class="fas fa-save"></i> Save Configuration
+                            <i class="fas fa-save"></i> Save & Continue
                         </button>
                     </form>
                     
-                    <div style="margin-top: 25px; padding: 15px; background: #f0f7ff; border-radius: 8px;">
-                        <p style="color: #1976d2; font-size: 14px; margin: 0;">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>How to get these values:</strong> Go to Firebase Console → Project Settings → Your apps → Web app
-                        </p>
-                    </div>
-                    
                     <button class="btn-system" id="backToSetup" style="margin-top: 15px; width: 100%; background: #eee; color: #333;">
-                        <i class="fas fa-arrow-left"></i> Back to Setup Options
+                        <i class="fas fa-arrow-left"></i> Back
                     </button>
                 </div>
             `;
@@ -626,26 +701,22 @@
                     projectId: document.getElementById('configProjectId').value.trim(),
                     storageBucket: document.getElementById('configStorageBucket').value.trim(),
                     messagingSenderId: document.getElementById('configMessagingSenderId').value.trim(),
-                    appId: document.getElementById('configAppId').value.trim()
+                    appId: document.getElementById('configAppId').value.trim(),
+                    measurementId: "G-GYS37PMK9E"
                 };
-                
-                // Validate config
-                if (!config.apiKey || config.apiKey.includes('YOUR_API_KEY')) {
-                    alert('Please enter a valid Firebase API Key');
-                    return;
-                }
                 
                 // Save to localStorage
                 localStorage.setItem('madrasa_firebase_config', JSON.stringify(config));
                 
-                // Create .env file content
+                // Create .env file content for download
                 const envContent = `FIREBASE_API_KEY=${config.apiKey}
 FIREBASE_AUTH_DOMAIN=${config.authDomain}
 FIREBASE_DATABASE_URL=${config.databaseURL}
 FIREBASE_PROJECT_ID=${config.projectId}
 FIREBASE_STORAGE_BUCKET=${config.storageBucket}
 FIREBASE_MESSAGING_SENDER_ID=${config.messagingSenderId}
-FIREBASE_APP_ID=${config.appId}`;
+FIREBASE_APP_ID=${config.appId}
+FIREBASE_MEASUREMENT_ID=${config.measurementId}`;
                 
                 // Offer to download .env file
                 try {
@@ -659,13 +730,13 @@ FIREBASE_APP_ID=${config.appId}`;
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
-                    alert('.env file downloaded. Place it in the same folder as index.html and refresh the page.');
+                    alert('Configuration saved! .env file downloaded. Place it in project root.');
                 } catch (e) {
-                    console.log('Could not save .env file automatically');
+                    console.log('Could not save .env file');
                 }
                 
                 // Reload page
-                location.reload();
+                setTimeout(() => location.reload(), 1000);
             });
             
             document.getElementById('backToSetup').addEventListener('click', showConfigSetup);
