@@ -1,116 +1,561 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student Admission Form</title>
-
-    <!-- SheetJS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Faizana Raza Madrasa | Complete Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <!-- SheetJS Excel Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    
     <style>
-        body {
-            font-family: Arial;
-            background: #eef2f3;
+        :root {
+            --primary: #1a237e; --primary-light: #534bae; --secondary: #3949ab;
+            --success: #2e7d32; --danger: #c62828; --warning: #f57c00; --info: #0277bd;
+            --light: #f5f7fa; --dark: #333; --card-bg: #fff; --border: #e0e0e0;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, 'Segoe UI', sans-serif; min-height: 100vh; background: var(--light); }
+        
+        .login-page {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
             padding: 20px;
         }
-        form {
-            background: white;
-            padding: 20px;
-            max-width: 500px;
-            margin: auto;
-            border-radius: 10px;
-            box-shadow: 0 0 10px gray;
+        .login-container { width: 100%; max-width: 400px; }
+        .logo-card {
+            background: white; border-radius: 20px; padding: 30px; margin-bottom: 20px;
+            box-shadow: var(--shadow); text-align: center;
         }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
+        .logo { font-size: 40px; color: var(--primary); margin-bottom: 15px; }
+        .logo-text h1 { font-size: 24px; color: var(--primary); margin-bottom: 5px; }
+        .logo-text p { color: #666; font-size: 14px; }
+        
+        .login-card {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: var(--shadow);
         }
-        button {
-            padding: 10px;
-            width: 100%;
-            margin-top: 10px;
-            background: green;
-            color: white;
-            border: none;
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); }
+        .form-input {
+            width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 10px;
+            font-size: 16px; background: white; transition: all 0.3s;
+        }
+        .form-input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(57,73,171,0.1); }
+        
+        .btn {
+            width: 100%; padding: 16px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-primary { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; margin-top: 10px; }
+        .notification {
+            padding: 15px; background: var(--success); color: white; border-radius: 10px;
+            margin-bottom: 20px; text-align: center; display: none; animation: slideDown 0.3s ease;
+        }
+        .notification.error { background: var(--danger); }
+        .password-wrapper { position: relative; }
+        .password-toggle {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #777; cursor: pointer;
+        }
+        
+        /* Main System */
+        .main-system { display: none; padding: 10px; }
+        .container { max-width: 100%; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 18px 15px; border-radius: 15px; margin-bottom: 20px;
+            box-shadow: var(--shadow); position: relative;
+        }
+        .user-info {
+            position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px;
+            font-size: 14px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.3); border: none; color: white; padding: 5px 10px;
+            border-radius: 10px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;
+        }
+        .stats-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 15px; }
+        .stat-card { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px; text-align: center; }
+        .stat-number { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        
+        .mobile-tabs {
+            display: flex; overflow-x: auto; gap: 8px; padding-bottom: 5px; margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 0 0 auto; padding: 12px 18px; background: white; border: 2px solid var(--border);
+            border-radius: 25px; color: var(--primary); font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .content-section { display: none; animation: fadeIn 0.3s ease; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card { background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
+        .card-header i { color: var(--secondary); font-size: 22px; }
+        .card-header h2 { font-size: 18px; color: var(--primary); font-weight: 700; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .required::after { content: " *"; color: var(--danger); }
+        
+        .btn-system {
+            display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px;
+            border: none; border-radius: 12px; font-weight: 600; cursor: pointer; width: 100%;
+        }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        
+        .table-wrapper { overflow-x: auto; margin-top: 15px; border-radius: 10px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { background: var(--primary); color: white; padding: 12px; text-align: left; font-size: 13px; }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .action-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+        .action-btn {
+            padding: 5px 10px; border: none; border-radius: 6px; font-size: 11px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .edit-btn { background: var(--warning); color: white; }
+        .delete-btn { background: var(--danger); color: white; }
+        .exit-btn { background: var(--info); color: white; }
+        .fee-paid { background: #c8e6c9; color: #2e7d32; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .fee-pending { background: #ffcdd2; color: #c62828; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .fee-advance { background: #bbdefb; color: #1565c0; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+        
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-box input { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; }
+        .search-box button { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; }
+        
+        .sys-notification {
+            position: fixed; top: 20px; left: 20px; right: 20px; padding: 15px; background: var(--success);
+            color: white; border-radius: 10px; display: none; z-index: 1000; text-align: center;
+        }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+        }
+        .modal { background: white; border-radius: 15px; padding: 25px; max-width: 500px; width: 100%; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+        @media (max-width: 480px) {
+            .form-row { grid-template-columns: 1fr; }
+            .user-info { position: static; margin-bottom: 10px; justify-content: flex-end; }
         }
     </style>
 </head>
-
 <body>
+    <!-- Login Page -->
+    <div class="login-page" id="loginPage">
+        <div class="login-container">
+            <div class="logo-card"><div class="logo"><i class="fas fa-sort-numeric-up-alt"></i></div><div class="logo-text"><h1>Madrasa Management</h1><p>Auto Roll • Fee Status • Search</p></div></div>
+            <div class="login-card">
+                <div class="notification" id="notification"></div>
+                <form id="loginForm">
+                    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" required></div>
+                    <div class="form-group"><div class="password-wrapper"><input type="password" class="form-input" id="loginPassword" required><button type="button" class="password-toggle" id="toggleLoginPassword"><i class="fas fa-eye"></i></button></div></div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
-<h2>Student Admission Form</h2>
+    <!-- Main System -->
+    <div class="main-system" id="mainSystem">
+        <div class="container">
+            <header class="header">
+                <div style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-sort-numeric-up-alt" style="font-size:28px;"></i><div><h1 style="font-size:18px;">Faizana Raza Madrasa</h1><p style="font-size:12px;">Rolls Start from 1 • Auto Reshuffle</p></div></div>
+                <div class="user-info"><i class="fas fa-user-circle"></i><span id="userName"></span><button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Exit</button></div>
+                <div class="stats-bar"><div class="stat-card"><div class="stat-number" id="totalStudents">0</div><div class="stat-label">Total</div></div><div class="stat-card"><div class="stat-number" id="currentStudents">0</div><div class="stat-label">Current</div></div><div class="stat-card"><div class="stat-number" id="exitedStudents">0</div><div class="stat-label">Exited</div></div></div>
+            </header>
 
-<form id="form">
-    <input type="text" id="roll" placeholder="Roll Number" required>
-    <input type="text" id="name" placeholder="Student Name" required>
-    <input type="text" id="father" placeholder="Father Name" required>
+            <div class="mobile-tabs">
+                <button class="tab-btn active" data-tab="students"><i class="fas fa-user-graduate"></i> Students</button>
+                <button class="tab-btn" data-tab="exit"><i class="fas fa-sign-out-alt"></i> Exit</button>
+                <button class="tab-btn" data-tab="export"><i class="fas fa-file-excel"></i> Export</button>
+            </div>
 
-    <input type="text" id="date" placeholder="Admission Date (22-03-2026)" required>
+            <section class="content-section active" id="students">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-user-plus"></i><h2>Add / Edit Student</h2></div>
+                    <div class="roll-info" style="background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:15px;"><i class="fas fa-info-circle"></i> <strong>Roll starts from 1</strong> • Leave blank for auto • Duplicate roll auto-corrected</div>
+                    <form id="studentForm">
+                        <div class="form-row"><div class="form-group"><label class="form-label required">Full Name</label><input type="text" class="form-input" id="fullName" required></div><div class="form-group"><label class="form-label required">Father Name</label><input type="text" class="form-input" id="fatherName" required></div></div>
+                        <div class="form-row"><div class="form-group"><label class="form-label">Roll Number</label><input type="number" class="form-input" id="rollNumber" placeholder="Auto smallest (1,2,3...)" min="1"></div><div class="form-group"><label class="form-label required">Age</label><input type="number" class="form-input" id="age" min="4" max="60" required></div></div>
+                        <div class="form-row"><div class="form-group"><label class="form-label required">Start From</label><input type="text" class="form-input" id="Startfrom" required placeholder="e.g., Quran, Nazra"></div><div class="form-group"><label class="form-label">Class/Section</label><input type="text" class="form-input" id="studentClass" placeholder="Class/Section"></div></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label required">Fee Status</label>
+                                <select class="form-input" id="feeStatus" required>
+                                    <option value="After Month">After Month</option>
+                                    <option value="Advance">Advance</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label class="form-label">Entry Date</label><input type="date" class="form-input" id="entryDate"></div>
+                        </div>
+                        <input type="hidden" id="studentId">
+                        <button type="submit" class="btn-system btn-primary" id="saveBtn"><i class="fas fa-save"></i> Save Student</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-search"></i><h2>Search Student</h2></div>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search by Roll Number or Name..." class="form-input" style="margin:0;">
+                        <button id="searchBtn" class="btn-system" style="width:auto; padding:0 20px; background:var(--primary);"><i class="fas fa-search"></i> Search</button>
+                        <button id="resetSearchBtn" class="btn-system" style="width:auto; padding:0 20px; background:#666;"><i class="fas fa-sync"></i> Reset</button>
+                        <button id="fixRollsBtn" class="btn-system" style="width:auto; padding:0 20px; background:var(--warning);"><i class="fas fa-magic"></i> Fix All Rolls</button>
+                    </div>
+                </div>
+                
+                <div class="card"><div class="card-header"><i class="fas fa-users"></i><h2>Current Students (Rolls: 1,2,3...)</h2></div><div class="table-wrapper"><table><thead><tr><th>Roll</th><th>Name</th><th>Father</th><th>Age</th><th>Startfrom</th><th>Class</th><th>Fee Status</th><th>Entry Date</th><th>Duration</th><th>Actions</th></tr></thead><tbody id="studentsTableBody"></tbody></table></div></div>
+            </section>
 
-    <select id="class">
-        <option>Noorani Qaida</option>
-        <option>Separa</option>
-    </select>
+            <section class="content-section" id="exit">
+                <div class="card"><div class="card-header"><i class="fas fa-door-open"></i><h2>Mark Exit & Reshuffle</h2></div>
+                <form id="exitForm"><div class="form-group"><label class="form-label">Roll Number to Exit</label><input type="number" class="form-input" id="exitRollNumber" required min="1"></div>
+                <div class="form-group"><label class="form-label">Reason</label><select class="form-input" id="exitReason" required><option value="">Select</option><option value="Completed Education">Completed</option><option value="Transferred">Transferred</option><option value="Family Reasons">Family</option><option value="Financial Issues">Financial</option><option value="Less Age">Less Age</option><option value="Other">Other</option></select></div>
+                <div class="form-row"><div class="form-group"><label class="form-label">Exit Date</label><input type="date" class="form-input" id="exitDate" required></div><div class="form-group"><label class="form-label">Duration Stayed</label><input type="text" class="form-input" id="duration" readonly></div></div>
+                <button type="submit" class="btn-system btn-danger"><i class="fas fa-sign-out-alt"></i> Mark Exited & Reshuffle</button></form></div>
+                <div class="card"><div class="card-header"><i class="fas fa-history"></i><h2>Exit History</h2></div><div class="table-wrapper"><table><thead><tr><th>Roll</th><th>Name</th><th>Father</th><th>Exit Date</th><th>Duration</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="exitHistoryBody"></tbody></table></div></div>
+            </section>
 
-    <input type="text" id="start" placeholder="Start From" required>
+            <section class="content-section" id="export">
+                <div class="card"><div class="card-header"><i class="fas fa-file-excel"></i><h2>Export Report</h2></div><div class="export-info" style="background:#e8f5e9; padding:15px; border-radius:12px;"><strong>📊 Excel Sheets:</strong> Current Students (with Fee Status: After Month/Advance & Duration), Exited Students (with reasons)</div><button class="btn-system btn-success" id="exportReport"><i class="fas fa-download"></i> Export Excel (Current + Exit)</button></div>
+            </section>
+            
+            <div class="sys-notification" id="sysNotification"></div>
+            <div class="modal-overlay" id="exitModal"><div class="modal"><div class="modal-header"><i class="fas fa-exchange-alt" style="color:var(--warning);"></i><h3>Confirm Exit & Reshuffle</h3></div><div id="exitModalContent"></div><div class="modal-actions"><button class="btn-system btn-danger" id="confirmExit">Confirm</button><button class="btn-system" id="cancelExit" style="background:#eee;">Cancel</button></div></div></div>
+        </div>
+    </div>
 
-    <select id="fee">
-        <option>Advance</option>
-        <option>After Month</option>
-    </select>
-
-    <select id="status">
-        <option value="active">Active</option>
-        <option value="exit">Exit</option>
-    </select>
-
-    <button type="submit">Save</button>
-</form>
-
-<br>
-<button onclick="downloadExcel()">Download Excel</button>
-
-<script>
-let activeStudents = [];
-let exitStudents = [];
-
-document.getElementById("form").addEventListener("submit", function(e){
-    e.preventDefault();
-
-    let student = {
-        Roll: document.getElementById("roll").value,
-        Name: document.getElementById("name").value,
-        Father: document.getElementById("father").value,
-        Date: document.getElementById("date").value,
-        Class: document.getElementById("class").value,
-        Start: document.getElementById("start").value,
-        Fee: document.getElementById("fee").value
-    };
-
-    let status = document.getElementById("status").value;
-
-    if(status === "active"){
-        activeStudents.push(student);
-    } else {
-        exitStudents.push(student);
-    }
-
-    alert("Saved!");
-    document.getElementById("form").reset();
-});
-
-function downloadExcel(){
-    let wb = XLSX.utils.book_new();
-
-    let ws1 = XLSX.utils.json_to_sheet(activeStudents);
-    let ws2 = XLSX.utils.json_to_sheet(exitStudents);
-
-    XLSX.utils.book_append_sheet(wb, ws1, "Active Students");
-    XLSX.utils.book_append_sheet(wb, ws2, "Exit Students");
-
-    XLSX.writeFile(wb, "Students_Data.xlsx");
-}
-</script>
-
+    <script>
+        // Firebase Config (working)
+        let database, auth, currentUser = null;
+        let students = [], exits = [], studentToExit = null, searchFilter = "";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-nEluewFdw3LLyU1biNEZ1cKpFLKN7kg",
+            authDomain: "allstudentdata-e1a01.firebaseapp.com",
+            databaseURL: "https://allstudentdata-e1a01-default-rtdb.firebaseio.com",
+            projectId: "allstudentdata-e1a01",
+            storageBucket: "allstudentdata-e1a01.firebasestorage.app",
+            messagingSenderId: "894758025587",
+            appId: "1:894758025587:web:187dd0f807910e5e04ad06"
+        };
+        
+        async function initFirebase() {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            auth = firebase.auth();
+            return true;
+        }
+        
+        // Roll starts from 1 (not 0)
+        function getOptimalRoll(studentsList, requestedRoll = null) {
+            const existing = studentsList.map(s => parseInt(s.rollNumber)).filter(r => !isNaN(r));
+            if(requestedRoll !== null && requestedRoll !== "" && !isNaN(parseInt(requestedRoll))) {
+                let req = parseInt(requestedRoll);
+                if(req >= 1 && !existing.includes(req)) return req.toString();
+            }
+            // Find smallest available roll starting from 1
+            for(let i=1; i<=existing.length+10; i++) {
+                if(!existing.includes(i)) return i.toString();
+            }
+            return "1";
+        }
+        
+        function fixAllRolls() {
+            let sorted = [...students].sort((a,b) => a.createdAt - b.createdAt);
+            let newStudents = [];
+            for(let i=0; i<sorted.length; i++) {
+                newStudents.push({...sorted[i], rollNumber: (i+1).toString()}); // Start from 1
+            }
+            saveToFirebase(newStudents, exits, "All roll numbers have been corrected to sequential order starting from 1");
+        }
+        
+        function reshuffleAfterExit(studentsList, exitedRollInt) {
+            let newList = studentsList.filter(s => parseInt(s.rollNumber) !== exitedRollInt);
+            newList = newList.map(s => {
+                let curr = parseInt(s.rollNumber);
+                if(curr > exitedRollInt) return {...s, rollNumber: (curr-1).toString()};
+                return s;
+            });
+            newList.sort((a,b)=>parseInt(a.rollNumber)-parseInt(b.rollNumber));
+            return newList;
+        }
+        
+        function calcDurationTillToday(entryDate) {
+            if(!entryDate) return "Unknown";
+            const start = new Date(entryDate);
+            const today = new Date();
+            const diffMs = today - start;
+            const days = Math.floor(diffMs / (1000*60*60*24));
+            if(days<0) return "0 days";
+            const years = Math.floor(days/365);
+            const months = Math.floor((days%365)/30);
+            const remainingDays = days % 30;
+            let parts = [];
+            if(years>0) parts.push(`${years}y`);
+            if(months>0) parts.push(`${months}m`);
+            if(remainingDays>0 || parts.length===0) parts.push(`${remainingDays}d`);
+            return parts.join(' ');
+        }
+        
+        function getFeeBadge(status) {
+            if(status === 'Advance') return '<span class="fee-advance"><i class="fas fa-check-circle"></i> Advance</span>';
+            if(status === 'After Month') return '<span class="fee-paid"><i class="fas fa-calendar-check"></i> After Month</span>';
+            return '<span class="fee-pending">After Month</span>';
+        }
+        
+        // Exact search: roll number exact match, name partial match but roll number exact only
+        function matchesSearch(student) {
+            if(!searchFilter) return true;
+            // Check if search is numeric - then exact roll match only
+            if(/^\d+$/.test(searchFilter)) {
+                return student.rollNumber.toString() === searchFilter;
+            }
+            // Otherwise search by name (partial match)
+            return student.fullName.toLowerCase().includes(searchFilter.toLowerCase());
+        }
+        
+        function renderStudentsTable() {
+            const tbody = document.getElementById('studentsTableBody');
+            if(!tbody) return;
+            let filtered = students.filter(matchesSearch);
+            filtered.sort((a,b)=>parseInt(a.rollNumber)-parseInt(b.rollNumber));
+            tbody.innerHTML = '';
+            if(filtered.length===0){ tbody.innerHTML='<tr><td colspan="10" style="text-align:center; padding:40px;">No students found with given search criteria</td></tr>'; return; }
+            filtered.forEach(s => {
+                const duration = calcDurationTillToday(s.entryDate);
+                const feeBadge = getFeeBadge(s.feeStatus || 'After Month');
+                const row = `<tr>
+                    <td><strong>${s.rollNumber}</strong></td>
+                    <td>${escapeHtml(s.fullName)}</td>
+                    <td>${escapeHtml(s.fatherName)}</td>
+                    <td>${s.age}</td>
+                    <td>${escapeHtml(s.Startfrom)}</td>
+                    <td>${escapeHtml(s.studentClass||'-')}</td>
+                    <td>${feeBadge}</td>
+                    <td>${s.entryDate}</td>
+                    <td>${duration}</td>
+                    <td><div class="action-buttons"><button class="action-btn edit-btn" onclick="editStudent('${s.id}')"><i class="fas fa-edit"></i> Edit</button><button class="action-btn delete-btn" onclick="deleteStudent('${s.id}')"><i class="fas fa-trash"></i> Del</button><button class="action-btn exit-btn" onclick="markForExit('${s.rollNumber}')"><i class="fas fa-sign-out-alt"></i> Exit</button></div></td>
+                </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+        
+        function renderExitHistory(){
+            const tbody = document.getElementById('exitHistoryBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if(exits.length===0){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;">No exit records</td></tr>'; return; }
+            exits.slice().reverse().forEach(e => {
+                tbody.innerHTML += `<tr><td>${e.rollNumber}</td><td>${escapeHtml(e.studentName)}</td><td>${escapeHtml(e.fatherName)}</td><td>${e.exitDate}</td><td>${e.duration}</td><td>${e.reason}</td><td><button class="action-btn delete-btn" onclick="deleteExitRecord('${e.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
+            });
+        }
+        
+        function updateStats(){
+            document.getElementById('totalStudents').innerText = students.length + exits.length;
+            document.getElementById('currentStudents').innerText = students.length;
+            document.getElementById('exitedStudents').innerText = exits.length;
+        }
+        
+        async function saveStudent(){
+            const id = document.getElementById('studentId').value;
+            let rollInput = document.getElementById('rollNumber').value.trim();
+            const name = document.getElementById('fullName').value.trim();
+            const father = document.getElementById('fatherName').value.trim();
+            const Startfrom = document.getElementById('Startfrom').value.trim();
+            const age = parseInt(document.getElementById('age').value);
+            const studentClass = document.getElementById('studentClass').value;
+            const entryDate = document.getElementById('entryDate').value || new Date().toISOString().split('T')[0];
+            const feeStatus = document.getElementById('feeStatus').value;
+            if(!name || !father || !Startfrom || isNaN(age)) { showMessage("Please fill required fields","error"); return; }
+            let newStudents = [...students];
+            if(id) newStudents = newStudents.filter(s => s.id !== id);
+            let finalRoll = getOptimalRoll(newStudents, rollInput);
+            const studentObj = {
+                id: id || 's_'+Date.now(),
+                fullName: name, fatherName: father, rollNumber: finalRoll, age: age,
+                Startfrom: Startfrom, studentClass: studentClass || '', entryDate: entryDate,
+                feeStatus: feeStatus,
+                createdAt: id ? students.find(s=>s.id===id)?.createdAt || Date.now() : Date.now(),
+                updatedAt: Date.now(), userId: currentUser?.uid
+            };
+            let updatedList = [...students];
+            if(id) updatedList = updatedList.map(s => s.id === id ? studentObj : s);
+            else updatedList.push(studentObj);
+            updatedList.sort((a,b)=>parseInt(a.rollNumber)-parseInt(b.rollNumber));
+            await saveToFirebase(updatedList, exits, "Student saved successfully");
+            document.getElementById('studentForm').reset(); document.getElementById('studentId').value=''; setTodayDates();
+            document.getElementById('feeStatus').value = 'After Month';
+        }
+        
+        window.editStudent = (id) => {
+            const s = students.find(s=>s.id===id); if(!s) return;
+            document.getElementById('studentId').value = s.id;
+            document.getElementById('fullName').value = s.fullName;
+            document.getElementById('fatherName').value = s.fatherName;
+            document.getElementById('rollNumber').value = s.rollNumber;
+            document.getElementById('age').value = s.age;
+            document.getElementById('Startfrom').value = s.Startfrom;
+            document.getElementById('studentClass').value = s.studentClass||'';
+            document.getElementById('entryDate').value = s.entryDate;
+            document.getElementById('feeStatus').value = s.feeStatus || 'After Month';
+        };
+        
+        window.deleteStudent = async (id) => {
+            const s = students.find(s=>s.id===id);
+            if(!s) return;
+            if(!confirm(`Delete ${s.fullName} (Roll ${s.rollNumber})? Rolls will reshuffle.`)) return;
+            let newList = students.filter(st=>st.id !== id);
+            const exitRoll = parseInt(s.rollNumber);
+            newList = newList.map(st => {
+                let curr = parseInt(st.rollNumber);
+                if(curr > exitRoll) return {...st, rollNumber: (curr-1).toString()};
+                return st;
+            });
+            await saveToFirebase(newList, exits, `Deleted ${s.fullName}`);
+        };
+        
+        function prepareExit(){
+            const roll = document.getElementById('exitRollNumber').value.trim();
+            const student = students.find(s=>s.rollNumber === roll);
+            if(!student){ showMessage("Roll not found","error"); return; }
+            studentToExit = student;
+            document.getElementById('exitModalContent').innerHTML = `<p><strong>${student.fullName}</strong> (Roll ${student.rollNumber})<br>Father: ${student.fatherName}<br>After exit, higher rolls shift down automatically.</p>`;
+            document.getElementById('exitModal').style.display = 'flex';
+        }
+        
+        async function confirmExitHandler(){
+            if(!studentToExit) return;
+            const reason = document.getElementById('exitReason').value;
+            const exitDate = document.getElementById('exitDate').value;
+            if(!reason || !exitDate){ showMessage("Select reason & exit date","error"); return; }
+            let duration = calcDurationTillToday(exitDate);
+            const exitRecord = {
+                id: 'exit_'+Date.now(), studentId: studentToExit.id, rollNumber: studentToExit.rollNumber,
+                studentName: studentToExit.fullName, fatherName: studentToExit.fatherName, age: studentToExit.age,
+                Startfrom: studentToExit.Startfrom, studentClass: studentToExit.studentClass, entryDate: studentToExit.entryDate,
+                exitDate: exitDate, reason: reason, duration: duration, exitTimestamp: Date.now(), userId: currentUser?.uid
+            };
+            let newStudents = students.filter(s=>s.id !== studentToExit.id);
+            const exitedRollInt = parseInt(studentToExit.rollNumber);
+            newStudents = reshuffleAfterExit(newStudents, exitedRollInt);
+            let newExits = [...exits, exitRecord];
+            await saveToFirebase(newStudents, newExits, `${studentToExit.fullName} exited. Rolls reshuffled.`);
+            document.getElementById('exitForm').reset(); setTodayDates();
+            document.getElementById('exitModal').style.display = 'none';
+            studentToExit = null;
+            document.getElementById('exitReason').value = '';
+        }
+        
+        window.deleteExitRecord = async (id) => {
+            if(!confirm("Delete exit record?")) return;
+            let newExits = exits.filter(e=>e.id !== id);
+            await saveToFirebase(students, newExits, "Exit record removed");
+        };
+        
+        function exportReport(){
+            if(students.length===0 && exits.length===0){ showMessage("No data","error"); return; }
+            const wb = XLSX.utils.book_new();
+            const currentData = students.map(s => ({
+                'Roll Number': s.rollNumber, 'Student Name': s.fullName, 'Father Name': s.fatherName,
+                'Age': s.age, 'Startfrom': s.Startfrom, 'Class': s.studentClass||'',
+                'Fee Status': s.feeStatus || 'After Month', 'Entry Date': s.entryDate, 'Duration Till Today': calcDurationTillToday(s.entryDate)
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(currentData), 'Current Students');
+            const exitData = exits.map(e => ({
+                'Roll': e.rollNumber, 'Name': e.studentName, 'Father': e.fatherName,
+                'Exit Date': e.exitDate, 'Duration Stayed': e.duration, 'Reason': e.reason
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exitData), 'Exited Students');
+            XLSX.writeFile(wb, `Madrasa_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+            showMessage("Excel exported with Current Students (Fee: After Month/Advance) + Exit History","success");
+        }
+        
+        async function saveToFirebase(newStudents, newExits, msg){
+            const path = `users/${currentUser.uid}/madrasaData`;
+            const studentsObj = {}; newStudents.forEach(s=>studentsObj[s.id]=s);
+            const exitsObj = {}; newExits.forEach(e=>exitsObj[e.id]=e);
+            try{
+                await database.ref(path).set({ students: studentsObj, exits: exitsObj, lastUpdated: Date.now() });
+                students = newStudents; exits = newExits;
+                updateStats(); renderStudentsTable(); renderExitHistory();
+                showMessage(msg,"success");
+            }catch(err){ showMessage("Save failed: "+err.message,"error"); }
+        }
+        
+        async function loadData(){
+            if(!currentUser) return;
+            const snap = await database.ref(`users/${currentUser.uid}/madrasaData`).once('value');
+            const data = snap.val();
+            if(data){
+                students = data.students ? Object.values(data.students) : [];
+                exits = data.exits ? Object.values(data.exits) : [];
+                students.sort((a,b)=>parseInt(a.rollNumber)-parseInt(b.rollNumber));
+            } else { students = []; exits = []; }
+            updateStats(); renderStudentsTable(); renderExitHistory();
+        }
+        
+        function setTodayDates(){
+            const today = new Date().toISOString().split('T')[0];
+            if(document.getElementById('entryDate') && !document.getElementById('entryDate').value) document.getElementById('entryDate').value = today;
+            if(document.getElementById('exitDate') && !document.getElementById('exitDate').value) document.getElementById('exitDate').value = today;
+        }
+        
+        function updateExitDurationField(){
+            const roll = document.getElementById('exitRollNumber').value;
+            const exitDate = document.getElementById('exitDate').value;
+            const student = students.find(s=>s.rollNumber === roll);
+            if(student && student.entryDate && exitDate) document.getElementById('duration').value = calcDurationTillToday(exitDate);
+            else document.getElementById('duration').value = "";
+        }
+        
+        window.markForExit = (roll) => { document.querySelector('.tab-btn[data-tab="exit"]').click(); document.getElementById('exitRollNumber').value=roll; updateExitDurationField(); };
+        function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        function showMessage(msg,type){ let el = document.getElementById('sysNotification'); if(el){ el.innerText=msg; el.className=`sys-notification ${type}`; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); } else alert(msg); }
+        
+        document.addEventListener('DOMContentLoaded', async()=>{
+            await initFirebase();
+            document.getElementById('loginForm').onsubmit = async(e)=>{
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value, pwd = document.getElementById('loginPassword').value;
+                try{
+                    const cred = await auth.signInWithEmailAndPassword(email,pwd);
+                    currentUser = cred.user;
+                    document.getElementById('loginPage').style.display='none';
+                    document.getElementById('mainSystem').style.display='block';
+                    document.getElementById('userName').innerText = currentUser.email;
+                    await loadData(); setTodayDates();
+                }catch(err){ document.getElementById('notification').innerText=err.message; document.getElementById('notification').style.display='block'; setTimeout(()=>document.getElementById('notification').style.display='none',3000); }
+            };
+            document.getElementById('logoutBtn').onclick = ()=>{ auth.signOut(); location.reload(); };
+            document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active')); document.getElementById(btn.dataset.tab).classList.add('active'); });
+            document.getElementById('studentForm').addEventListener('submit',(e)=>{ e.preventDefault(); saveStudent(); });
+            document.getElementById('exitForm').addEventListener('submit',(e)=>{ e.preventDefault(); prepareExit(); });
+            document.getElementById('exitRollNumber').addEventListener('input', updateExitDurationField);
+            document.getElementById('exitDate').addEventListener('change', updateExitDurationField);
+            document.getElementById('confirmExit').onclick = confirmExitHandler;
+            document.getElementById('cancelExit').onclick = ()=>{ document.getElementById('exitModal').style.display='none'; studentToExit=null; };
+            document.getElementById('exportReport').onclick = exportReport;
+            document.getElementById('searchBtn').onclick = () => { searchFilter = document.getElementById('searchInput').value.trim(); renderStudentsTable(); };
+            document.getElementById('resetSearchBtn').onclick = () => { document.getElementById('searchInput').value = ''; searchFilter = ''; renderStudentsTable(); };
+            document.getElementById('fixRollsBtn').onclick = () => { if(confirm("Fix all roll numbers to sequential order starting from 1?")) fixAllRolls(); };
+            document.getElementById('toggleLoginPassword').onclick = ()=>{ let p=document.getElementById('loginPassword'); p.type = p.type==='password'?'text':'password'; };
+            auth.onAuthStateChanged(user=>{ if(!user && document.getElementById('mainSystem').style.display==='block') location.reload(); });
+        });
+    </script>
 </body>
 </html>
